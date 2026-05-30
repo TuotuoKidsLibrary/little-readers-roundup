@@ -49,12 +49,34 @@ const seedUser: UserProfile = {
   zip_code: "",
 };
 
+const guestUser: UserProfile = {
+  id: "guest",
+  name: "Guest",
+  membership_status: "Free Tier Testing Mode",
+  deposit_balance: 0,
+  wallet_balance: 0,
+  neighborhood_location: "",
+  zip_code: "",
+};
+
+export interface SignupInput {
+  name: string;
+  email: string;
+  password: string;
+  neighborhood: string;
+  zip: string;
+}
+
 interface StoreCtx {
   user: UserProfile;
   books: Book[];
   threads: Thread[];
   messages: Message[];
   activity: ActivityRecord[];
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => void;
+  signup: (input: SignupInput) => void;
+  logout: () => void;
   addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { ownerOverride?: string }) => void;
   setBookStatus: (id: string, status: BookStatus) => void;
   requestBook: (book: Book, method: string, note: string) => void;
@@ -69,7 +91,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [threads, setThreads] = useState<Thread[]>(seedThreads);
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [activity, setActivity] = useState<ActivityRecord[]>(seedActivity);
-  const [user, setUser] = useState<UserProfile>(seedUser);
+  const [user, setUser] = useState<UserProfile>(guestUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const addBook: StoreCtx["addBook"] = (b) => {
     const isDonation = b.status === "donation";
@@ -123,8 +146,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser((prev) => ({ ...prev, ...patch }));
   };
 
+  const login: StoreCtx["login"] = (email) => {
+    setUser({ ...seedUser, name: seedUser.name });
+    setIsAuthenticated(true);
+    void email;
+  };
+
+  const signup: StoreCtx["signup"] = ({ name, neighborhood, zip }) => {
+    setUser({
+      ...seedUser,
+      name: name || seedUser.name,
+      neighborhood_location: neighborhood,
+      zip_code: zip,
+    });
+    setIsAuthenticated(true);
+  };
+
+  const logout: StoreCtx["logout"] = () => {
+    setUser(guestUser);
+    setIsAuthenticated(false);
+  };
+
   return (
-    <Ctx.Provider value={{ user, books, threads, messages, activity, addBook, setBookStatus, requestBook, sendMessage, updateProfile }}>
+    <Ctx.Provider value={{ user, books, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile }}>
       {children}
     </Ctx.Provider>
   );
