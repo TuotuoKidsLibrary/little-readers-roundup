@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles } from "lucide-react";
+import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin } from "lucide-react";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
@@ -20,24 +20,55 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
-  const { user } = useStore();
+  const { user, updateProfile } = useStore();
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 space-y-5">
       <h1 className="font-serif text-3xl font-bold">Account & Membership</h1>
 
-      <Card className="p-5 flex items-center gap-4 bg-card">
-        <Avatar className="size-14">
-          <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
-            {user.name.split(" ").map((w) => w[0]).join("")}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <p className="font-serif font-bold text-xl leading-none">{user.name}</p>
-          <p className="text-xs text-muted-foreground mt-1">Member since May 2025 · Brooklyn, NY</p>
+      <Card className="p-5 bg-card space-y-5">
+        <div className="flex items-center gap-4">
+          <Avatar className="size-14">
+            <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
+              {user.name.split(" ").map((w) => w[0]).join("")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <p className="font-serif font-bold text-xl leading-none">{user.name}</p>
+            <p className="text-xs text-muted-foreground mt-1">Member since May 2025</p>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Settings className="size-4" /> Edit
+          </Button>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Settings className="size-4" /> Edit
-        </Button>
+
+        <Separator />
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="neighborhood">Neighborhood / Community Name</Label>
+            <Input
+              id="neighborhood"
+              value={user.neighborhood_location}
+              onChange={(e) => updateProfile({ neighborhood_location: e.target.value })}
+              placeholder="e.g., Midtown, Parker Towers, Alpharetta"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="zip">Zip Code</Label>
+            <Input
+              id="zip"
+              value={user.zip_code}
+              onChange={(e) => updateProfile({ zip_code: e.target.value })}
+              placeholder="11201"
+              inputMode="numeric"
+              maxLength={10}
+            />
+          </div>
+          <p className="sm:col-span-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <MapPin className="size-3.5 text-primary" />
+            Used to help local parents calculate meetup distances for exchanges.
+          </p>
+        </div>
       </Card>
 
       <Card className="p-5 bg-gradient-to-br from-primary/10 via-accent/30 to-background border-primary/30">
