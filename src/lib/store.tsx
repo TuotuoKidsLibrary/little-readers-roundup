@@ -45,6 +45,8 @@ const seedUser: UserProfile = {
   membership_status: "Free Tier Testing Mode",
   deposit_balance: 50.0,
   wallet_balance: 0.0,
+  neighborhood_location: "",
+  zip_code: "",
 };
 
 interface StoreCtx {
@@ -57,6 +59,7 @@ interface StoreCtx {
   setBookStatus: (id: string, status: BookStatus) => void;
   requestBook: (book: Book, method: string, note: string) => void;
   sendMessage: (thread_id: string, text: string) => void;
+  updateProfile: (patch: Partial<UserProfile>) => void;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -66,7 +69,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [threads, setThreads] = useState<Thread[]>(seedThreads);
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [activity, setActivity] = useState<ActivityRecord[]>(seedActivity);
-  const [user] = useState<UserProfile>(seedUser);
+  const [user, setUser] = useState<UserProfile>(seedUser);
 
   const addBook: StoreCtx["addBook"] = (b) => {
     const isDonation = b.status === "donation";
@@ -116,8 +119,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
+  const updateProfile: StoreCtx["updateProfile"] = (patch) => {
+    setUser((prev) => ({ ...prev, ...patch }));
+  };
+
   return (
-    <Ctx.Provider value={{ user, books, threads, messages, activity, addBook, setBookStatus, requestBook, sendMessage }}>
+    <Ctx.Provider value={{ user, books, threads, messages, activity, addBook, setBookStatus, requestBook, sendMessage, updateProfile }}>
       {children}
     </Ctx.Provider>
   );

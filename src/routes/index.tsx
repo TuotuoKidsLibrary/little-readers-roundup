@@ -39,6 +39,8 @@ function Index() {
   const filtered = useMemo(
     () =>
       books.filter((b) => {
+        // Private books are never shown in the public Community Library
+        if (b.status === "private") return false;
         if (script !== "all" && b.script_type !== script) return false;
         if (age !== "all" && b.age_range !== age) return false;
         if (status !== "all" && b.status !== status) return false;

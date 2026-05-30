@@ -1,6 +1,6 @@
 export type ScriptType = "Simplified" | "Traditional";
 export type AgeRange = "0-2" | "3-5" | "6+";
-export type BookStatus = "available" | "reserved" | "for_sale" | "donation";
+export type BookStatus = "available" | "reserved" | "for_sale" | "donation" | "private";
 
 export interface Book {
   id: string;
@@ -46,4 +46,6 @@ export interface UserProfile {
   membership_status: string;
   deposit_balance: number;
   wallet_balance: number;
+  neighborhood_location: string;
+  zip_code: string;
 }

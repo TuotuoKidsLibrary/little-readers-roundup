@@ -8,6 +8,7 @@ const statusLabel: Record<Book["status"], { label: string; cls: string }> = {
   reserved: { label: "Reserved", cls: "bg-amber-100 text-amber-800 border-amber-200" },
   for_sale: { label: "For Sale", cls: "bg-primary/15 text-primary border-primary/30" },
   donation: { label: "Donation", cls: "bg-accent text-accent-foreground border-accent" },
+  private: { label: "Private", cls: "bg-muted text-muted-foreground border-border" },
 };
 
 export function BookCard({ book, onClick }: { book: Book; onClick: () => void }) {

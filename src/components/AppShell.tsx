@@ -22,8 +22,8 @@ export function AppShell() {
               书
             </span>
             <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-serif font-bold text-lg">小书阁 · BookNest</span>
-              <span className="text-[11px] text-muted-foreground">Chinese Children's Book Club</span>
+              <span className="font-serif font-bold text-sm">Borrow, Sell & Share Chinese Children's Books</span>
+              <span className="text-[11px] text-muted-foreground">中文绘本分享</span>
             </div>
           </Link>
 
@@ -50,7 +50,7 @@ export function AppShell() {
               trigger={
                 <Button size="sm" className="gap-1.5 rounded-full shadow-sm">
                   <PlusCircle className="size-4" />
-                  <span className="hidden sm:inline">Log Book</span>
+                  <span className="hidden sm:inline">Contribute</span>
                 </Button>
               }
             />
