@@ -15,6 +15,7 @@ import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb } from "luc
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
+import { IsbnScanner } from "./IsbnScanner";
 
 const contributionOptions: {
   id: BookStatus;
@@ -38,6 +39,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [script, setScript] = useState<ScriptType>("Simplified");
   const [age, setAge] = useState<AgeRange>("3-5");
   const [price, setPrice] = useState("");
+  const [scanning, setScanning] = useState(false);
 
   const reset = () => {
     setStatus("available");
@@ -47,6 +49,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setScript("Simplified");
     setAge("3-5");
     setPrice("");
+    setScanning(false);
   };
 
   const submit = () => {
@@ -76,9 +79,9 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setOpen(false);
   };
 
-  const simulateScan = () => {
-    const fake = "978" + Math.floor(1000000000 + Math.random() * 8999999999).toString();
-    setIsbn(fake);
+  const handleDetected = (code: string) => {
+    setIsbn(code);
+    setScanning(false);
     toast.success("ISBN captured from barcode!");
   };
 
@@ -106,14 +109,18 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
         <div className="flex flex-col gap-4">
           {/* ISBN ingestion */}
           <div className="rounded-xl border border-border bg-background/60 p-3 flex flex-col gap-2.5">
-            <Button
-              type="button"
-              onClick={simulateScan}
-              variant="outline"
-              className="w-full justify-center gap-2 rounded-lg border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
-            >
-              <ScanLine className="size-4" /> Scan ISBN Barcode
-            </Button>
+            {scanning ? (
+              <IsbnScanner onDetected={handleDetected} onClose={() => setScanning(false)} />
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setScanning(true)}
+                variant="outline"
+                className="w-full justify-center gap-2 rounded-lg border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
+              >
+                <ScanLine className="size-4" /> Scan ISBN Barcode
+              </Button>
+            )}
             <div className="grid gap-1.5">
               <Label htmlFor="isbn" className="text-xs text-muted-foreground">Or enter 13-digit ISBN manually</Label>
               <Input
