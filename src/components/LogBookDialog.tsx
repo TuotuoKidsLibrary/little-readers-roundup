@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb } from "lucide-react";
+import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
+import { lookupIsbn } from "@/lib/bookLookup";
 
 const contributionOptions: {
   id: BookStatus;
@@ -40,6 +41,8 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [age, setAge] = useState<AgeRange>("3-5");
   const [price, setPrice] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [looking, setLooking] = useState(false);
+  const isbnRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
     setStatus("available");
@@ -50,19 +53,41 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setAge("3-5");
     setPrice("");
     setScanning(false);
+    setLooking(false);
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!isbn.trim() && !title.trim()) {
       toast.error("Please scan or enter an ISBN (or add a title).");
       return;
     }
+
+    let finalTitle = title.trim();
+    let finalAuthor = author.trim();
+    let finalScript = script;
+    let finalAge = age;
+
+    if (isbn.trim() && !finalTitle) {
+      setLooking(true);
+      try {
+        const meta = await lookupIsbn(isbn.trim());
+        finalTitle = meta.title;
+        finalAuthor = finalAuthor || meta.author;
+        finalScript = meta.script_type;
+        finalAge = meta.age_range;
+      } catch {
+        toast.error("Could not look up that ISBN — saved with the details you provided.");
+      } finally {
+        setLooking(false);
+      }
+    }
+
     addBook({
-      title: title.trim() || `Book ${isbn.trim().slice(-4) || "Untitled"}`,
-      author: author.trim() || "Unknown",
+      title: finalTitle || `Book ${isbn.trim().slice(-4) || "Untitled"}`,
+      author: finalAuthor || "Unknown",
       isbn: isbn.trim() || "—",
-      script_type: script,
-      age_range: age,
+      script_type: finalScript,
+      age_range: finalAge,
       status,
       price: status === "for_sale" ? Number(price) || 0 : undefined,
     });
@@ -110,7 +135,14 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
           {/* ISBN ingestion */}
           <div className="rounded-xl border border-border bg-background/60 p-3 flex flex-col gap-2.5">
             {scanning ? (
-              <IsbnScanner onDetected={handleDetected} onClose={() => setScanning(false)} />
+              <IsbnScanner
+                onDetected={handleDetected}
+                onClose={() => setScanning(false)}
+                onManualFallback={() => {
+                  setScanning(false);
+                  setTimeout(() => isbnRef.current?.focus(), 50);
+                }}
+              />
             ) : (
               <Button
                 type="button"
@@ -125,6 +157,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
               <Label htmlFor="isbn" className="text-xs text-muted-foreground">Or enter 13-digit ISBN manually</Label>
               <Input
                 id="isbn"
+                ref={isbnRef}
                 value={isbn}
                 onChange={(e) => setIsbn(e.target.value)}
                 placeholder="978XXXXXXXXXX"
@@ -225,8 +258,14 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             </div>
           </details>
 
-          <Button className="w-full rounded-full" onClick={submit}>
-            {status === "private" ? "Save to my shelf" : "Contribute book"}
+          <Button className="w-full rounded-full gap-2" onClick={submit} disabled={looking}>
+            {looking ? (
+              <>
+                <Loader2 className="size-4 animate-spin" /> Looking up book…
+              </>
+            ) : (
+              status === "private" ? "Save to my shelf" : "Contribute book"
+            )}
           </Button>
         </div>
       </DialogContent>
