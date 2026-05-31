@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
-import { lookupIsbn } from "@/lib/bookLookup";
 
 const contributionOptions: {
   id: BookStatus;
@@ -37,11 +36,12 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
+  const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
   const [script, setScript] = useState<ScriptType>("Simplified");
   const [age, setAge] = useState<AgeRange>("3-5");
   const [price, setPrice] = useState("");
   const [scanning, setScanning] = useState(false);
-  const [looking, setLooking] = useState(false);
+  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found">("idle");
   const isbnRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -49,47 +49,54 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setTitle("");
     setAuthor("");
     setIsbn("");
+    setCoverUrl(undefined);
     setScript("Simplified");
     setAge("3-5");
     setPrice("");
     setScanning(false);
-    setLooking(false);
+    setLookupState("idle");
   };
 
-  const submit = async () => {
-    if (!isbn.trim() && !title.trim()) {
-      toast.error("Please scan or enter an ISBN (or add a title).");
+  const runLookup = async () => {
+    const cleaned = isbn.trim();
+    if (!/^\d{13}$/.test(cleaned)) {
+      toast.error("Please enter a valid 13-digit ISBN.");
       return;
     }
-
-    let finalTitle = title.trim();
-    let finalAuthor = author.trim();
-    let finalScript = script;
-    let finalAge = age;
-
-    if (isbn.trim() && !finalTitle) {
-      setLooking(true);
-      try {
-        const meta = await lookupIsbn(isbn.trim());
-        finalTitle = meta.title;
-        finalAuthor = finalAuthor || meta.author;
-        finalScript = meta.script_type;
-        finalAge = meta.age_range;
-      } catch {
-        toast.error("Could not look up that ISBN — saved with the details you provided.");
-      } finally {
-        setLooking(false);
+    setLookupState("loading");
+    try {
+      const res = await fetch(
+        `https://openlibrary.org/api/books?bibkeys=ISBN:${cleaned}&jscmd=data&format=json`,
+      );
+      const json = (await res.json()) as Record<string, { title?: string; authors?: { name: string }[] }>;
+      const entry = json[`ISBN:${cleaned}`];
+      if (!entry || !entry.title) {
+        setLookupState("not_found");
+        return;
       }
+      setTitle(entry.title);
+      setAuthor(entry.authors?.[0]?.name ?? "");
+      setCoverUrl(`https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`);
+      setLookupState("found");
+    } catch {
+      setLookupState("not_found");
     }
+  };
 
+  const saveBook = () => {
+    if (!title.trim()) {
+      toast.error("Please enter the book title.");
+      return;
+    }
     addBook({
-      title: finalTitle || `Book ${isbn.trim().slice(-4) || "Untitled"}`,
-      author: finalAuthor || "Unknown",
+      title: title.trim(),
+      author: author.trim() || "Unknown",
       isbn: isbn.trim() || "—",
-      script_type: finalScript,
-      age_range: finalAge,
+      script_type: script,
+      age_range: age,
       status,
       price: status === "for_sale" ? Number(price) || 0 : undefined,
+      cover_url: coverUrl,
     });
     toast.success(
       status === "donation"
@@ -109,6 +116,9 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setScanning(false);
     toast.success("ISBN captured from barcode!");
   };
+
+  const showDetails = lookupState === "found" || lookupState === "not_found";
+  const loading = lookupState === "loading";
 
   return (
     <Dialog
@@ -159,14 +169,54 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 id="isbn"
                 ref={isbnRef}
                 value={isbn}
-                onChange={(e) => setIsbn(e.target.value)}
+                onChange={(e) => {
+                  setIsbn(e.target.value);
+                  if (lookupState !== "idle") setLookupState("idle");
+                }}
                 placeholder="978XXXXXXXXXX"
                 inputMode="numeric"
                 maxLength={13}
               />
             </div>
+            {!showDetails && (
+              <Button
+                type="button"
+                onClick={runLookup}
+                disabled={loading || !isbn.trim()}
+                className="w-full rounded-lg gap-2"
+                variant="secondary"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Searching public library databases...
+                  </>
+                ) : (
+                  "Look up book"
+                )}
+              </Button>
+            )}
+            {lookupState === "not_found" && (
+              <p className="text-xs text-foreground/80 rounded-lg bg-accent/40 border border-accent p-2.5">
+                ISBN not found in public registries. No worries! Please type the Title and Author details below to add it manually to our community library.
+              </p>
+            )}
+            {lookupState === "found" && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 flex gap-3 items-start">
+                {coverUrl && (
+                  <img src={coverUrl} alt={title} className="h-16 w-12 object-cover rounded-sm shadow" />
+                )}
+                <div className="flex flex-col text-xs">
+                  <span className="font-serif font-bold text-sm">{title}</span>
+                  <span className="text-muted-foreground">{author || "Unknown author"}</span>
+                  <span className="text-[10px] text-primary mt-1">Pulled from Open Library — confirm details below.</span>
+                </div>
+              </div>
+            )}
           </div>
 
+          {showDetails && (
+          <>
           {/* Contribution choice */}
           <div className="grid gap-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -217,12 +267,12 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             </p>
           )}
 
-          {/* Optional details */}
-          <details className="rounded-lg border border-border/60 bg-background/40 p-3">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Optional details
-            </summary>
-            <div className="flex flex-col gap-3 pt-3">
+          {/* Book details — confirm before saving */}
+          <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Confirm book details
+            </p>
+            <div className="flex flex-col gap-3">
               <div className="grid gap-1.5">
                 <Label htmlFor="title">Title (中文)</Label>
                 <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：好饿的毛毛虫" />
@@ -256,17 +306,13 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 </div>
               </div>
             </div>
-          </details>
+          </div>
 
-          <Button className="w-full rounded-full gap-2" onClick={submit} disabled={looking}>
-            {looking ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Looking up book…
-              </>
-            ) : (
-              status === "private" ? "Save to my shelf" : "Contribute book"
-            )}
+          <Button className="w-full rounded-full gap-2" onClick={saveBook}>
+            {status === "private" ? "Save to my shelf" : "Contribute book"}
           </Button>
+          </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
