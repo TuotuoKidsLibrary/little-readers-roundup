@@ -18,8 +18,8 @@ import {
 
 const nav = [
   { to: "/", label: "Library", Icon: Library, requiresAuth: false },
-  { to: "/shelf", label: "My Shelf", Icon: BookOpen, requiresAuth: true },
-  { to: "/account", label: "Account", Icon: User, requiresAuth: true },
+  { to: "/shelf", label: "My Shelf", Icon: BookOpen, requiresAuth: false },
+  { to: "/account", label: "Account", Icon: User, requiresAuth: false },
 ] as const;
 
 export function AppShell() {
