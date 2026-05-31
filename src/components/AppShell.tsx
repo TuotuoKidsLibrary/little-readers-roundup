@@ -69,16 +69,16 @@ export function AppShell() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            <LogBookDialog
+              trigger={
+                <Button size="sm" className="gap-1.5 rounded-full shadow-sm">
+                  <PlusCircle className="size-4" />
+                  <span className="hidden sm:inline">Contribute</span>
+                </Button>
+              }
+            />
             {isAuthenticated ? (
               <>
-                <LogBookDialog
-                  trigger={
-                    <Button size="sm" className="gap-1.5 rounded-full shadow-sm">
-                      <PlusCircle className="size-4" />
-                      <span className="hidden sm:inline">Contribute</span>
-                    </Button>
-                  }
-                />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -109,20 +109,9 @@ export function AppShell() {
                 </DropdownMenu>
               </>
             ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 rounded-full"
-                  onClick={() => setLockedOpen(true)}
-                >
-                  <PlusCircle className="size-4" />
-                  <span className="hidden sm:inline">Contribute</span>
-                </Button>
-                <Button size="sm" className="rounded-full shadow-sm" onClick={() => setAuthOpen(true)}>
-                  Log In
-                </Button>
-              </>
+              <Button size="sm" className="rounded-full shadow-sm" onClick={() => setAuthOpen(true)}>
+                Log In
+              </Button>
             )}
           </div>
         </div>
