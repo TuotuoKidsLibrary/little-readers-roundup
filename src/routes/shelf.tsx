@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useStore, CURRENT_USER_ID } from "@/lib/store";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
+import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
 import { Send, ArrowLeft, BookOpen, Activity, MessageSquare, History } from "lucide-react";
 
@@ -23,13 +24,31 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, activity } = useStore();
-  const mine = useMemo(() => books.filter((b) => b.owner_id === CURRENT_USER_ID), [books]);
+  const { books, activity, isAuthenticated } = useStore();
+  const ownerId = isAuthenticated ? CURRENT_USER_ID : "guest_user";
+  const mine = useMemo(() => books.filter((b) => b.owner_id === ownerId), [books, ownerId]);
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
   const [selected, setSelected] = useState<Book | null>(null);
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-6">
+      {!isAuthenticated && (
+        <div className="mb-5 rounded-2xl border border-primary/20 bg-gradient-to-br from-accent/40 via-card to-background p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className="text-sm text-foreground/80 flex-1 leading-relaxed">
+            <span className="mr-1">👋</span>
+            You are viewing a temporary shelf. Create a free account to permanently
+            save your books, track reading requests, and safely share with families
+            nationwide!
+          </p>
+          <AuthDialog
+            trigger={
+              <Button size="sm" className="rounded-full shadow-sm shrink-0">
+                Create Account
+              </Button>
+            }
+          />
+        </div>
+      )}
       <h1 className="font-serif text-3xl font-bold mb-1">My Shelf & Activity</h1>
       <p className="text-sm text-muted-foreground mb-5">Manage your books, conversations, and exchange history.</p>
 
