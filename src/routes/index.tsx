@@ -112,7 +112,7 @@ function Index() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search titles, authors, or filter by Zip Code for Media Mail..."
+            placeholder="Search titles, authors, or filter by book status..."
             className="pl-9 rounded-full bg-card"
           />
         </div>
