@@ -99,7 +99,7 @@ function Index() {
           Community Library
         </Badge>
         <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
-          A Chinese Children's Library <span className="text-primary">Built by Your Community</span>
+          Our Shared Chinese Children's Library
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl">
           Books contributed by neighbor families across the club. Tap any book to arrange a meetup, porch pickup, or Media Mail.
