@@ -128,7 +128,7 @@ export function AppShell() {
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-2 -mt-1 hidden sm:block">
           <p className="text-[11px] text-muted-foreground">
-            A Chinese Children's Library Built by Your Community
+            Our Shared Chinese Children's Library
           </p>
         </div>
       </header>

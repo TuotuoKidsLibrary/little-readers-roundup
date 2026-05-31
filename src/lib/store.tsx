@@ -77,7 +77,7 @@ interface StoreCtx {
   login: (email: string, password: string) => void;
   signup: (input: SignupInput) => void;
   logout: () => void;
-  addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { ownerOverride?: string }) => void;
+  addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { cover_hue?: number; ownerOverride?: string }) => void;
   setBookStatus: (id: string, status: BookStatus) => void;
   requestBook: (book: Book, method: string, note: string) => void;
   sendMessage: (thread_id: string, text: string) => void;
@@ -100,7 +100,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const owner_id = isDonation ? "platform_admin" : CURRENT_USER_ID;
     const owner_name = isDonation ? "Library Collection" : "You";
     setBooks((prev) => [
-      { ...b, id, owner_id, owner_name, cover_hue: Math.floor(Math.random() * 360) },
+      { ...b, id, owner_id, owner_name, cover_hue: b.cover_hue ?? Math.floor(Math.random() * 360) },
       ...prev,
     ]);
   };
