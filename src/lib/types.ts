@@ -14,6 +14,7 @@ export interface Book {
   owner_id: string;
   owner_name: string;
   cover_hue: number;
+  cover_url?: string;
 }
 
 export interface Message {
