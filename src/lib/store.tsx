@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { useEffect } from "react";
 import type {
   ActivityRecord,
   Book,
@@ -9,6 +10,29 @@ import type {
 } from "./types";
 
 const CURRENT_USER_ID = "current_user";
+const GUEST_OWNER_ID = "guest_user";
+const GUEST_BOOKS_KEY = "guest_books_v1";
+const GUEST_PROFILE_KEY = "guest_profile_v1";
+
+function loadGuestBooks(): Book[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(GUEST_BOOKS_KEY);
+    return raw ? (JSON.parse(raw) as Book[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadGuestProfile(): { neighborhood_location: string; zip_code: string } {
+  if (typeof window === "undefined") return { neighborhood_location: "", zip_code: "" };
+  try {
+    const raw = window.localStorage.getItem(GUEST_PROFILE_KEY);
+    return raw ? JSON.parse(raw) : { neighborhood_location: "", zip_code: "" };
+  } catch {
+    return { neighborhood_location: "", zip_code: "" };
+  }
+}
 
 const seedBooks: Book[] = [
   { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
@@ -51,7 +75,7 @@ const seedUser: UserProfile = {
 
 const guestUser: UserProfile = {
   id: "guest",
-  name: "Guest",
+  name: "Guest Visitor (Temporary Account)",
   membership_status: "Free Tier Testing Mode",
   deposit_balance: 0,
   wallet_balance: 0,
@@ -87,12 +111,47 @@ interface StoreCtx {
 const Ctx = createContext<StoreCtx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [books, setBooks] = useState<Book[]>(seedBooks);
+  const [books, setBooks] = useState<Book[]>(() => {
+    const guestBooks = loadGuestBooks();
+    return [...guestBooks, ...seedBooks];
+  });
   const [threads, setThreads] = useState<Thread[]>(seedThreads);
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [activity, setActivity] = useState<ActivityRecord[]>(seedActivity);
-  const [user, setUser] = useState<UserProfile>(guestUser);
+  const [user, setUser] = useState<UserProfile>(() => {
+    const gp = loadGuestProfile();
+    return { ...guestUser, ...gp };
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Persist guest books to localStorage whenever they change (guests only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isAuthenticated) return;
+    const guestBooks = books.filter((b) => b.owner_id === GUEST_OWNER_ID);
+    try {
+      window.localStorage.setItem(GUEST_BOOKS_KEY, JSON.stringify(guestBooks));
+    } catch {
+      /* ignore */
+    }
+  }, [books, isAuthenticated]);
+
+  // Persist guest profile (neighborhood + zip) for visitors
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isAuthenticated) return;
+    try {
+      window.localStorage.setItem(
+        GUEST_PROFILE_KEY,
+        JSON.stringify({
+          neighborhood_location: user.neighborhood_location,
+          zip_code: user.zip_code,
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [user.neighborhood_location, user.zip_code, isAuthenticated]);
 
   const addBook: StoreCtx["addBook"] = (b) => {
     const isDonation = b.status === "donation";
@@ -101,7 +160,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ? "platform_admin"
       : isAuthenticated
         ? CURRENT_USER_ID
-        : "guest_user";
+        : GUEST_OWNER_ID;
     const owner_name = isDonation ? "Library Collection" : "You";
     setBooks((prev) => [
       { ...b, id, owner_id, owner_name, cover_hue: b.cover_hue ?? Math.floor(Math.random() * 360) },
@@ -150,9 +209,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser((prev) => ({ ...prev, ...patch }));
   };
 
+  const mergeGuestBooks = () => {
+    setBooks((prev) =>
+      prev.map((b) =>
+        b.owner_id === GUEST_OWNER_ID
+          ? { ...b, owner_id: CURRENT_USER_ID, owner_name: "You" }
+          : b,
+      ),
+    );
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(GUEST_BOOKS_KEY);
+        window.localStorage.removeItem(GUEST_PROFILE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   const login: StoreCtx["login"] = (email) => {
-    setUser({ ...seedUser, name: seedUser.name });
+    setUser({
+      ...seedUser,
+      neighborhood_location: user.neighborhood_location || seedUser.neighborhood_location,
+      zip_code: user.zip_code || seedUser.zip_code,
+    });
     setIsAuthenticated(true);
+    mergeGuestBooks();
     void email;
   };
 
@@ -160,10 +242,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser({
       ...seedUser,
       name: name || seedUser.name,
-      neighborhood_location: neighborhood,
-      zip_code: zip,
+      neighborhood_location: neighborhood || user.neighborhood_location,
+      zip_code: zip || user.zip_code,
     });
     setIsAuthenticated(true);
+    mergeGuestBooks();
   };
 
   const logout: StoreCtx["logout"] = () => {
