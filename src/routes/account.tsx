@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { AuthDialog } from "@/components/AuthDialog";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
-  const { user, updateProfile } = useStore();
+  const { user, updateProfile, isAuthenticated } = useStore();
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 space-y-5">
       <h1 className="font-serif text-3xl font-bold">Account & Membership</h1>
@@ -29,17 +30,43 @@ function AccountPage() {
         <div className="flex items-center gap-4">
           <Avatar className="size-14">
             <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
-              {user.name.split(" ").map((w) => w[0]).join("")}
+              {isAuthenticated ? user.name.split(" ").map((w) => w[0]).join("") : "GV"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <p className="font-serif font-bold text-xl leading-none">{user.name}</p>
-            <p className="text-xs text-muted-foreground mt-1">Member since May 2025</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isAuthenticated ? "Member since May 2025" : "Books saved on this device only"}
+            </p>
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Settings className="size-4" /> Edit
-          </Button>
+          {isAuthenticated && (
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Settings className="size-4" /> Edit
+            </Button>
+          )}
         </div>
+
+        {!isAuthenticated && (
+          <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-accent/50 via-primary/5 to-background p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <h3 className="font-serif font-bold text-lg">Unlock Full Membership Perks!</h3>
+            </div>
+            <p className="text-sm text-foreground/75 leading-relaxed">
+              Right now, your contributions are stored safely on this device only.
+              Sign up today to start sharing books with the community, receiving
+              borrowing requests from other parents, and requesting Media Mail
+              shipping labels!
+            </p>
+            <AuthDialog
+              trigger={
+                <Button size="sm" className="rounded-full shadow-sm">
+                  Convert to Free Account
+                </Button>
+              }
+            />
+          </div>
+        )}
 
         <Separator />
 
@@ -71,6 +98,7 @@ function AccountPage() {
         </div>
       </Card>
 
+      {isAuthenticated && (
       <Card className="p-5 bg-gradient-to-br from-primary/10 via-accent/30 to-background border-primary/30">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -85,7 +113,9 @@ function AccountPage() {
           <Button size="sm">Upgrade</Button>
         </div>
       </Card>
+      )}
 
+      {isAuthenticated && (
       <Card className="p-5 bg-card">
         <header className="flex items-center gap-2 mb-4">
           <Wallet className="size-5 text-primary" />
@@ -134,6 +164,7 @@ function AccountPage() {
           <Button variant="outline" className="w-full sm:w-auto">Save payment method</Button>
         </div>
       </Card>
+      )}
     </div>
   );
 }
