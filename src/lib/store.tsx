@@ -97,7 +97,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addBook: StoreCtx["addBook"] = (b) => {
     const isDonation = b.status === "donation";
     const id = "b" + Math.random().toString(36).slice(2, 8);
-    const owner_id = isDonation ? "platform_admin" : CURRENT_USER_ID;
+    const owner_id = isDonation
+      ? "platform_admin"
+      : isAuthenticated
+        ? CURRENT_USER_ID
+        : "guest_user";
     const owner_name = isDonation ? "Library Collection" : "You";
     setBooks((prev) => [
       { ...b, id, owner_id, owner_name, cover_hue: b.cover_hue ?? Math.floor(Math.random() * 360) },
