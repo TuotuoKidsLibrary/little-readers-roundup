@@ -139,6 +139,7 @@ function EmptyState({ text }: { text: string }) {
 
 function MessagesPanel() {
   const { threads, messages, sendMessage } = useStore();
+  const { t } = useI18n();
   const [activeId, setActiveId] = useState<string | null>(threads[0]?.id ?? null);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -166,7 +167,7 @@ function MessagesPanel() {
         className={`border-r border-border ${activeId ? "hidden md:block" : "block"}`}
       >
         {threads.length === 0 ? (
-          <div className="p-6 text-sm text-muted-foreground text-center">No conversations yet.</div>
+          <div className="p-6 text-sm text-muted-foreground text-center">{t("no_conversations")}</div>
         ) : (
           <ul>
             {threads.map((t) => (
@@ -242,7 +243,7 @@ function MessagesPanel() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                placeholder="Send a message…"
+                placeholder={t("send_message_placeholder")}
                 className="rounded-full bg-background"
               />
               <Button onClick={send} size="icon" className="rounded-full shrink-0">
@@ -252,7 +253,7 @@ function MessagesPanel() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground p-6">
-            Pick a conversation to start chatting.
+            {t("pick_conversation")}
           </div>
         )}
       </section>
