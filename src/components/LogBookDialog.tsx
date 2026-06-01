@@ -14,23 +14,24 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
+import { useI18n } from "@/lib/i18n";
 import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
 
-const contributionOptions: {
-  id: BookStatus;
-  title: string;
-  sub: string;
-  Icon: typeof BookOpen;
-}[] = [
-  { id: "available", title: "Lend It", sub: "Share with another family — they return when done.", Icon: BookOpen },
-  { id: "for_sale", title: "Sell It", sub: "Set an asking price; buyer pays you directly.", Icon: Tag },
-  { id: "donation", title: "Donate It", sub: "Goes into the central Library collection.", Icon: Heart },
-  { id: "private", title: "Private (Personal Shelf Only)", sub: "Only visible to you on your My Contributions tab.", Icon: Lock },
-];
-
 export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const { addBook } = useStore();
+  const { t, lang } = useI18n();
+  const contributionOptions: {
+    id: BookStatus;
+    title: string;
+    sub: string;
+    Icon: typeof BookOpen;
+  }[] = [
+    { id: "available", title: t("status_lend"), sub: lang === "zh" ? "与其他家庭分享 — 阅读后归还。" : "Share with another family — they return when done.", Icon: BookOpen },
+    { id: "for_sale", title: t("status_sell"), sub: lang === "zh" ? "设定售价，买家直接付款给您。" : "Set an asking price; buyer pays you directly.", Icon: Tag },
+    { id: "donation", title: t("status_donate"), sub: lang === "zh" ? "捐入中央绘本馆收藏。" : "Goes into the central Library collection.", Icon: Heart },
+    { id: "private", title: t("status_private"), sub: lang === "zh" ? "仅在您的个人书架可见。" : "Only visible to you on your My Contributions tab.", Icon: Lock },
+  ];
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<BookStatus>("available");
   const [title, setTitle] = useState("");
@@ -160,7 +161,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 variant="outline"
                 className="w-full justify-center gap-2 rounded-lg border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
               >
-                <ScanLine className="size-4" /> Scan ISBN Barcode
+                <ScanLine className="size-4" /> {t("scan_isbn")}
               </Button>
             )}
             <div className="grid gap-1.5">
