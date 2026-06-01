@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { AuthDialog } from "./AuthDialog";
 import { LockedActionDialog } from "./LockedActionDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useI18n } from "@/lib/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,18 +17,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const nav = [
-  { to: "/", label: "Library", Icon: Library, requiresAuth: false },
-  { to: "/shelf", label: "My Shelf", Icon: BookOpen, requiresAuth: false },
-  { to: "/account", label: "Account", Icon: User, requiresAuth: false },
-] as const;
-
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useStore();
+  const { t, lang, toggle } = useI18n();
   const [authOpen, setAuthOpen] = useState(false);
   const [lockedOpen, setLockedOpen] = useState(false);
+
+  const nav = [
+    { to: "/", label: t("nav_library"), Icon: Library, requiresAuth: false },
+    { to: "/shelf", label: t("nav_shelf"), Icon: BookOpen, requiresAuth: false },
+    { to: "/account", label: t("nav_account"), Icon: User, requiresAuth: false },
+  ] as const;
 
   const guardedClick = (e: React.MouseEvent, requiresAuth: boolean) => {
     if (requiresAuth && !isAuthenticated) {
@@ -69,11 +71,21 @@ export function AppShell() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label="Toggle language"
+              className="rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <span className={lang === "en" ? "text-primary font-semibold" : ""}>EN</span>
+              <span className="mx-1 text-muted-foreground">|</span>
+              <span className={lang === "zh" ? "text-primary font-semibold" : ""}>中</span>
+            </button>
             <LogBookDialog
               trigger={
                 <Button size="sm" className="gap-1.5 rounded-full shadow-sm">
                   <PlusCircle className="size-4" />
-                  <span className="hidden sm:inline">Contribute</span>
+                  <span className="hidden sm:inline">{t("contribute")}</span>
                 </Button>
               }
             />
@@ -96,28 +108,28 @@ export function AppShell() {
                     <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => navigate({ to: "/account" })}>
-                      <User className="size-4 mr-2" /> Account
+                      <User className="size-4 mr-2" /> {t("nav_account")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => navigate({ to: "/shelf" })}>
-                      <BookOpen className="size-4 mr-2" /> My Shelf
+                      <BookOpen className="size-4 mr-2" /> {t("nav_shelf")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => logout()}>
-                      <LogOut className="size-4 mr-2" /> Log out
+                      <LogOut className="size-4 mr-2" /> {t("log_out")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
             ) : (
               <Button size="sm" className="rounded-full shadow-sm" onClick={() => setAuthOpen(true)}>
-                Log In
+                {t("log_in")}
               </Button>
             )}
           </div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-2 -mt-1 hidden sm:block">
           <p className="text-[11px] text-muted-foreground">
-            Our Shared Chinese Children's Library
+            {t("slogan")}
           </p>
         </div>
       </header>

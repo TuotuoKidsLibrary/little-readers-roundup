@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useStore, CURRENT_USER_ID } from "@/lib/store";
+import { useI18n } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { AuthDialog } from "@/components/AuthDialog";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/shelf")({
 
 function ShelfPage() {
   const { books, activity, isAuthenticated } = useStore();
+  const { t } = useI18n();
   const ownerId = isAuthenticated ? CURRENT_USER_ID : "guest_user";
   const mine = useMemo(() => books.filter((b) => b.owner_id === ownerId), [books, ownerId]);
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
@@ -36,14 +38,12 @@ function ShelfPage() {
         <div className="mb-5 rounded-2xl border border-primary/20 bg-gradient-to-br from-accent/40 via-card to-background p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
           <p className="text-sm text-foreground/80 flex-1 leading-relaxed">
             <span className="mr-1">👋</span>
-            You are viewing a temporary shelf. Create a free account to permanently
-            save your books, track reading requests, and safely share with families
-            nationwide!
+            {t("shelf_guest_banner")}
           </p>
           <AuthDialog
             trigger={
               <Button size="sm" className="rounded-full shadow-sm shrink-0">
-                Create Account
+                {t("create_account")}
               </Button>
             }
           />
@@ -71,7 +71,7 @@ function ShelfPage() {
             <StatCard label="Active Loans" value={activeLoans} Icon={Activity} />
           </div>
           {mine.length === 0 ? (
-            <EmptyState text="You haven't contributed any books yet — tap + Log Book to add one." />
+            <EmptyState text={t("shelf_empty")} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {mine.map((b) => (

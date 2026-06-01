@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useStore } from "@/lib/store";
+import { useI18n } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
 import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { books } = useStore();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [script, setScript] = useState<ScriptType | "all">("all");
   const [age, setAge] = useState<AgeRange | "all">("all");
@@ -96,13 +98,13 @@ function Index() {
     <div className="mx-auto max-w-6xl px-4 pt-6">
       <section className="mb-6 flex flex-col gap-2">
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
-          Community Library
+          {t("nav_library")}
         </Badge>
         <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
-          Our Shared Chinese Children's Library
+          {t("slogan")}
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl">
-          Books contributed by neighbor families across the club. Tap any book to arrange a meetup, porch pickup, or Media Mail.
+          {t("home_subtitle")}
         </p>
       </section>
 
@@ -112,7 +114,7 @@ function Index() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search titles, authors, or filter by book status..."
+            placeholder={t("search_placeholder")}
             className="pl-9 rounded-full bg-card"
           />
         </div>
