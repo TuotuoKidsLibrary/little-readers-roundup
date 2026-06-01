@@ -20,17 +20,17 @@ import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const { addBook } = useStore();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const contributionOptions: {
     id: BookStatus;
     title: string;
     sub: string;
     Icon: typeof BookOpen;
   }[] = [
-    { id: "available", title: t("status_lend"), sub: lang === "zh" ? "与其他家庭分享 — 阅读后归还。" : "Share with another family — they return when done.", Icon: BookOpen },
-    { id: "for_sale", title: t("status_sell"), sub: lang === "zh" ? "设定售价，买家直接付款给您。" : "Set an asking price; buyer pays you directly.", Icon: Tag },
-    { id: "donation", title: t("status_donate"), sub: lang === "zh" ? "捐入中央绘本馆收藏。" : "Goes into the central Library collection.", Icon: Heart },
-    { id: "private", title: t("status_private"), sub: lang === "zh" ? "仅在您的个人书架可见。" : "Only visible to you on your My Contributions tab.", Icon: Lock },
+    { id: "available", title: t("status_lend"), sub: t("lend_sub"), Icon: BookOpen },
+    { id: "for_sale", title: t("status_sell"), sub: t("sell_sub"), Icon: Tag },
+    { id: "donation", title: t("status_donate"), sub: t("donate_sub"), Icon: Heart },
+    { id: "private", title: t("status_private"), sub: t("private_sub"), Icon: Lock },
   ];
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<BookStatus>("available");
@@ -101,7 +101,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     });
     toast.success(
       status === "donation"
-        ? "Donation logged — please coordinate delivery to the Admin Hub."
+        ? "Donation logged."
         : status === "for_sale"
           ? "Book listed for sale!"
           : status === "private"
@@ -132,14 +132,14 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       <DialogTrigger asChild>
         {trigger ?? (
           <Button size="sm" className="gap-1.5 rounded-full">
-            <PlusCircle className="size-4" /> Contribute
+            <PlusCircle className="size-4" /> {t("contribute")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="bg-card max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">Contribute a book</DialogTitle>
-          <DialogDescription>Start by scanning or entering the ISBN, then pick how to share it.</DialogDescription>
+          <DialogTitle className="font-serif text-2xl">{t("contribute_title")}</DialogTitle>
+          <DialogDescription>{t("contribute_subtitle")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -165,7 +165,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
               </Button>
             )}
             <div className="grid gap-1.5">
-              <Label htmlFor="isbn" className="text-xs text-muted-foreground">Or enter 13-digit ISBN manually</Label>
+              <Label htmlFor="isbn" className="text-xs text-muted-foreground">{t("manual_entry")}</Label>
               <Input
                 id="isbn"
                 ref={isbnRef}
@@ -190,16 +190,16 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 {loading ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Searching public library databases...
+                    {t("searching_db")}
                   </>
                 ) : (
-                  "Look up book"
+                  t("lookup_book")
                 )}
               </Button>
             )}
             {lookupState === "not_found" && (
               <p className="text-xs text-foreground/80 rounded-lg bg-accent/40 border border-accent p-2.5">
-                ISBN not found in public registries. No worries! Please type the Title and Author details below to add it manually to our community library.
+                {t("isbn_not_found")}
               </p>
             )}
             {lookupState === "found" && (
@@ -207,10 +207,10 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 {coverUrl && (
                   <img src={coverUrl} alt={title} className="h-16 w-12 object-cover rounded-sm shadow" />
                 )}
-                <div className="flex flex-col text-xs">
-                  <span className="font-serif font-bold text-sm">{title}</span>
-                  <span className="text-muted-foreground">{author || "Unknown author"}</span>
-                  <span className="text-[10px] text-primary mt-1">Pulled from Open Library — confirm details below.</span>
+                <div className="flex flex-col text-xs min-w-0">
+                  <span className="font-serif font-bold text-sm break-words">{title}</span>
+                  <span className="text-muted-foreground break-words">{author || "Unknown author"}</span>
+                  <span className="text-[10px] text-primary mt-1">{t("pulled_from_ol")}</span>
                 </div>
               </div>
             )}
@@ -221,10 +221,10 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
           {/* Contribution choice */}
           <div className="grid gap-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              How would you like to share it?
+              {t("select_sharing_option")}
             </Label>
             <div className="grid grid-cols-1 gap-2">
-              {contributionOptions.map(({ id, title: t, sub, Icon }) => {
+              {contributionOptions.map(({ id, title: optTitle, sub, Icon }) => {
                 const active = status === id;
                 return (
                   <button
@@ -238,9 +238,9 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                     <span className={`flex size-9 items-center justify-center rounded-lg shrink-0 ${active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
                       <Icon className="size-4" />
                     </span>
-                    <span className="flex flex-col">
-                      <span className="font-serif font-bold text-sm">{t}</span>
-                      <span className="text-xs text-muted-foreground">{sub}</span>
+                    <span className="flex flex-col min-w-0">
+                      <span className="font-serif font-bold text-sm">{optTitle}</span>
+                      <span className="text-xs text-muted-foreground break-words">{sub}</span>
                     </span>
                   </button>
                 );
@@ -250,41 +250,41 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
 
           {status === "for_sale" && (
             <div className="grid gap-1.5">
-              <Label htmlFor="price">Asking price ($)</Label>
+              <Label htmlFor="price">{t("asking_price")}</Label>
               <Input id="price" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="8" />
             </div>
           )}
 
           {status === "donation" && (
             <p className="text-xs text-muted-foreground rounded-lg bg-accent/40 border border-accent p-2.5">
-              Donated books go to the central Library — please coordinate drop-off at the Admin Hub.
+              {t("donation_note")}
             </p>
           )}
 
           {status === "private" && (
             <p className="text-xs text-foreground/80 rounded-lg bg-muted/60 border border-border p-2.5 flex gap-2 items-start">
               <Lightbulb className="size-4 text-primary shrink-0 mt-0.5" />
-              <span>Keep track of your personal collection privately—you can easily toggle this to public when your kids outgrow it!</span>
+              <span>{t("private_note")}</span>
             </p>
           )}
 
-          {/* Book details — confirm before saving */}
+          {/* Book details */}
           <div className="rounded-lg border border-border/60 bg-background/40 p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Confirm book details
+              {t("confirm_book_details")}
             </p>
             <div className="flex flex-col gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="title">Title (中文)</Label>
+                <Label htmlFor="title">{t("book_title")}</Label>
                 <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：好饿的毛毛虫" />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="author">Author</Label>
+                <Label htmlFor="author">{t("author")}</Label>
                 <Input id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
-                  <Label>Script</Label>
+                  <Label>{t("script_type")}</Label>
                   <RadioGroup value={script} onValueChange={(v) => setScript(v as ScriptType)} className="flex gap-2">
                     {(["Simplified", "Traditional"] as ScriptType[]).map((s) => (
                       <Label key={s} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
@@ -295,12 +295,12 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                   </RadioGroup>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Age</Label>
+                  <Label>{t("age_range")}</Label>
                   <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-1">
                     {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
                       <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-xs ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
                         <RadioGroupItem value={a} className="sr-only" />
-                        {a}
+                        {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
                       </Label>
                     ))}
                   </RadioGroup>
@@ -309,9 +309,21 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             </div>
           </div>
 
-          <Button className="w-full rounded-full gap-2" onClick={saveBook}>
-            {status === "private" ? "Save to my shelf" : "Contribute book"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              onClick={() => {
+                reset();
+                setOpen(false);
+              }}
+            >
+              {t("cancel")}
+            </Button>
+            <Button className="flex-1 rounded-full gap-2" onClick={saveBook}>
+              {status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
+            </Button>
+          </div>
           </>
           )}
         </div>

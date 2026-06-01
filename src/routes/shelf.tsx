@@ -49,26 +49,26 @@ function ShelfPage() {
           />
         </div>
       )}
-      <h1 className="font-serif text-3xl font-bold mb-1">My Shelf & Activity</h1>
-      <p className="text-sm text-muted-foreground mb-5">Manage your books, conversations, and exchange history.</p>
+      <h1 className="font-serif text-3xl font-bold mb-1 break-words">{t("shelf_title")}</h1>
+      <p className="text-sm text-muted-foreground mb-5">{t("shelf_subtitle")}</p>
 
       <Tabs defaultValue="contrib" className="w-full">
         <TabsList className="w-full grid grid-cols-3 bg-muted/60 rounded-full p-1 h-auto">
           <TabsTrigger value="contrib" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
-            <BookOpen className="size-4" /> Contributions
+            <BookOpen className="size-4" /> {t("tab_contrib")}
           </TabsTrigger>
           <TabsTrigger value="msg" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
-            <MessageSquare className="size-4" /> Messages
+            <MessageSquare className="size-4" /> {t("tab_msg")}
           </TabsTrigger>
           <TabsTrigger value="hist" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
-            <History className="size-4" /> History
+            <History className="size-4" /> {t("tab_history")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="contrib" className="pt-5">
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <StatCard label="Total Contributed" value={mine.length} Icon={BookOpen} />
-            <StatCard label="Active Loans" value={activeLoans} Icon={Activity} />
+            <StatCard label={t("total_contributed")} value={mine.length} Icon={BookOpen} />
+            <StatCard label={t("active_loans")} value={activeLoans} Icon={Activity} />
           </div>
           {mine.length === 0 ? (
             <EmptyState text={t("shelf_empty")} />
@@ -87,7 +87,7 @@ function ShelfPage() {
 
         <TabsContent value="hist" className="pt-5">
           {activity.length === 0 ? (
-            <EmptyState text="No exchanges yet." />
+            <EmptyState text={t("no_exchanges")} />
           ) : (
             <ol className="relative border-l border-border ml-3 space-y-4">
               {activity.map((a) => (
@@ -121,9 +121,9 @@ function StatCard({ label, value, Icon }: { label: string; value: number; Icon: 
       <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Icon className="size-5" />
       </span>
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="text-2xl font-serif font-bold leading-none">{value}</p>
-        <p className="text-xs text-muted-foreground mt-1">{label}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-snug break-words">{label}</p>
       </div>
     </Card>
   );
@@ -139,6 +139,7 @@ function EmptyState({ text }: { text: string }) {
 
 function MessagesPanel() {
   const { threads, messages, sendMessage } = useStore();
+  const { t } = useI18n();
   const [activeId, setActiveId] = useState<string | null>(threads[0]?.id ?? null);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -166,7 +167,7 @@ function MessagesPanel() {
         className={`border-r border-border ${activeId ? "hidden md:block" : "block"}`}
       >
         {threads.length === 0 ? (
-          <div className="p-6 text-sm text-muted-foreground text-center">No conversations yet.</div>
+          <div className="p-6 text-sm text-muted-foreground text-center">{t("no_conversations")}</div>
         ) : (
           <ul>
             {threads.map((t) => (
@@ -242,7 +243,7 @@ function MessagesPanel() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                placeholder="Send a message…"
+                placeholder={t("send_message_placeholder")}
                 className="rounded-full bg-background"
               />
               <Button onClick={send} size="icon" className="rounded-full shrink-0">
@@ -252,7 +253,7 @@ function MessagesPanel() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground p-6">
-            Pick a conversation to start chatting.
+            {t("pick_conversation")}
           </div>
         )}
       </section>
