@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/account")({
 
 function AccountPage() {
   const { user, updateProfile, isAuthenticated } = useStore();
+  const { t } = useI18n();
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 space-y-5">
       <h1 className="font-serif text-3xl font-bold">Account & Membership</h1>
@@ -34,7 +36,9 @@ function AccountPage() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <p className="font-serif font-bold text-xl leading-none">{user.name}</p>
+            <p className="font-serif font-bold text-xl leading-none">
+              {isAuthenticated ? user.name : t("account_guest_name")}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               {isAuthenticated ? "Member since May 2025" : "Books saved on this device only"}
             </p>
@@ -53,10 +57,7 @@ function AccountPage() {
               <h3 className="font-serif font-bold text-lg">Unlock Full Membership Perks!</h3>
             </div>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Right now, your contributions are stored safely on this device only.
-              Sign up today to start sharing books with the community, receiving
-              borrowing requests from other parents, and requesting Media Mail
-              shipping labels!
+              {t("account_signup_callout")}
             </p>
             <AuthDialog
               trigger={
