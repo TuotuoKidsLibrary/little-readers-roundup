@@ -6,7 +6,8 @@ const STORAGE_KEY = "app_lang_v1";
 
 const dict = {
   // Brand & nav
-  slogan: { en: "Grow Our Library, Raise Bilingual Children", zh: "共创中文绘本馆 共育双语儿童" },
+  brand_name: { en: "Chinese Children's Library", zh: "妥妥绘本馆" },
+  slogan: { en: "Grown Our Library, Raise Bilingual Children", zh: "共创中文绘本馆，培养双语儿童" },
   nav_library: { en: "Community Library", zh: "社群书库" },
   nav_shelf: { en: "My Shelf", zh: "我的书架" },
   nav_account: { en: "Account", zh: "个人中心" },

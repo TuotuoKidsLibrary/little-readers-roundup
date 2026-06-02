@@ -46,8 +46,8 @@ export function AppShell() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 h-16 flex items-center gap-4">
           <Link to="/" className="flex items-baseline gap-2 shrink-0">
-            <span className="font-serif font-bold text-xl sm:text-2xl text-primary tracking-tight">
-              妥妥绘本馆
+            <span className="font-serif font-bold text-xl sm:text-2xl text-primary tracking-tight whitespace-nowrap">
+              {t("brand_name")}
             </span>
           </Link>
 
@@ -128,7 +128,7 @@ export function AppShell() {
           </div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-2 -mt-1 hidden sm:block">
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground text-center whitespace-nowrap">
             {t("slogan")}
           </p>
         </div>
