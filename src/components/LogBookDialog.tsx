@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
-  const { addBook } = useStore();
+  const { addBook, books } = useStore();
   const { t } = useI18n();
   const contributionOptions: {
     id: BookStatus;
@@ -42,8 +42,9 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [age, setAge] = useState<AgeRange>("3-5");
   const [price, setPrice] = useState("");
   const [scanning, setScanning] = useState(false);
-  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found">("idle");
+  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached">("idle");
   const isbnRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
     setStatus("available");
@@ -65,23 +66,70 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       return;
     }
     setLookupState("loading");
+
+    // 1. Local community cache — has any member nationwide cataloged this ISBN?
+    const cached = books.find((b) => b.isbn === cleaned);
+    if (cached) {
+      setTitle(cached.title);
+      setAuthor(cached.author);
+      setScript(cached.script_type);
+      setAge(cached.age_range);
+      if (cached.cover_url) setCoverUrl(cached.cover_url);
+      setLookupState("cached");
+      return;
+    }
+
+    // 2. Open Library with 1.5s timeout
+    const fetchWithTimeout = async (url: string, ms: number) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ms);
+      try {
+        return await fetch(url, { signal: ctrl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `https://openlibrary.org/api/books?bibkeys=ISBN:${cleaned}&jscmd=data&format=json`,
+        1500,
       );
       const json = (await res.json()) as Record<string, { title?: string; authors?: { name: string }[] }>;
       const entry = json[`ISBN:${cleaned}`];
-      if (!entry || !entry.title) {
-        setLookupState("not_found");
+      if (entry && entry.title) {
+        setTitle(entry.title);
+        setAuthor(entry.authors?.[0]?.name ?? "");
+        setCoverUrl(`https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`);
+        setLookupState("found");
         return;
       }
-      setTitle(entry.title);
-      setAuthor(entry.authors?.[0]?.name ?? "");
-      setCoverUrl(`https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`);
-      setLookupState("found");
     } catch {
-      setLookupState("not_found");
+      /* fall through to Google Books */
     }
+
+    // 3. Fallback — Google Books (open East-Asian-friendly registry)
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleaned}`,
+      );
+      const json = (await res.json()) as {
+        items?: { volumeInfo?: { title?: string; authors?: string[]; imageLinks?: { thumbnail?: string } } }[];
+      };
+      const info = json.items?.[0]?.volumeInfo;
+      if (info?.title) {
+        setTitle(info.title);
+        setAuthor(info.authors?.[0] ?? "");
+        const img = info.imageLinks?.thumbnail?.replace("http:", "https:");
+        if (img) setCoverUrl(img);
+        setLookupState("found");
+        return;
+      }
+    } catch {
+      /* fall through to not_found */
+    }
+
+    setLookupState("not_found");
   };
 
   const saveBook = () => {
@@ -118,8 +166,17 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     toast.success("ISBN captured from barcode!");
   };
 
-  const showDetails = lookupState === "found" || lookupState === "not_found";
+  const showDetails =
+    lookupState === "found" || lookupState === "not_found" || lookupState === "cached";
   const loading = lookupState === "loading";
+
+  // Auto-focus the Title input when fallback (not_found) is triggered
+  useEffect(() => {
+    if (lookupState === "not_found") {
+      const id = setTimeout(() => titleRef.current?.focus(), 60);
+      return () => clearTimeout(id);
+    }
+  }, [lookupState]);
 
   return (
     <Dialog
@@ -214,6 +271,18 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                 </div>
               </div>
             )}
+            {lookupState === "cached" && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 flex gap-3 items-start">
+                {coverUrl && (
+                  <img src={coverUrl} alt={title} className="h-16 w-12 object-cover rounded-sm shadow" />
+                )}
+                <div className="flex flex-col text-xs min-w-0">
+                  <span className="font-serif font-bold text-sm break-words">{title}</span>
+                  <span className="text-muted-foreground break-words">{author || "Unknown author"}</span>
+                  <span className="text-[10px] text-primary mt-1">{t("pulled_from_cache")}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {showDetails && (
@@ -276,7 +345,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             <div className="flex flex-col gap-3">
               <div className="grid gap-1.5">
                 <Label htmlFor="title">{t("book_title")}</Label>
-                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：好饿的毛毛虫" />
+                <Input id="title" ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：好饿的毛毛虫" />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="author">{t("author")}</Label>
