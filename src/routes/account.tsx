@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin } from "lucide-react";
+import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin, Heart } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useI18n } from "@/lib/i18n";
@@ -97,6 +97,16 @@ function AccountPage() {
             {t("neighborhood_hint")}
           </p>
         </div>
+      </Card>
+
+      <Card className="p-6 bg-gradient-to-br from-accent/40 via-card to-background border-border/60">
+        <div className="flex items-center gap-2 mb-3">
+          <Heart className="size-5 text-primary" />
+          <h2 className="font-serif font-bold text-lg break-words">{t("our_story_title")}</h2>
+        </div>
+        <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line break-words">
+          {t("our_story_body")}
+        </p>
       </Card>
 
       {isAuthenticated && (
