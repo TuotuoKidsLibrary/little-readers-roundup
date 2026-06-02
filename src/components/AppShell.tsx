@@ -127,15 +127,6 @@ export function AppShell() {
             )}
           </div>
         </div>
-        <div className="mx-auto max-w-6xl px-4 pb-2 -mt-1 hidden sm:block">
-          <p className="text-[11px] text-muted-foreground text-center">
-            {lang === "en" ? (
-              <>Grown Our Library,<br className="sm:hidden" /> Raise Bilingual Children</>
-            ) : (
-              t("slogan")
-            )}
-          </p>
-        </div>
       </header>
 
       <main className="flex-1 pb-24 md:pb-10">
