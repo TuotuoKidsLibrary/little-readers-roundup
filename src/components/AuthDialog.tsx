@@ -6,7 +6,7 @@ export function AuthDialog({
   trigger,
   open: openProp,
   onOpenChange,
-  title = "Welcome to 中文绘本馆",
+  title = "Welcome to 妥妥绘本馆",
   description = "Log in or create a free account to join the community.",
 }: {
   trigger?: ReactNode;

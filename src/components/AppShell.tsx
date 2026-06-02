@@ -47,7 +47,7 @@ export function AppShell() {
         <div className="mx-auto max-w-6xl px-4 h-16 flex items-center gap-4">
           <Link to="/" className="flex items-baseline gap-2 shrink-0">
             <span className="font-serif font-bold text-xl sm:text-2xl text-primary tracking-tight">
-              中文绘本馆
+              妥妥绘本馆
             </span>
           </Link>
 

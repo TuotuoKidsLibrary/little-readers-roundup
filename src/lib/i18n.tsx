@@ -6,7 +6,7 @@ const STORAGE_KEY = "app_lang_v1";
 
 const dict = {
   // Brand & nav
-  slogan: { en: "Our Shared Chinese Children's Library", zh: "我们大家的中文绘本馆" },
+  slogan: { en: "Grow Our Library, Raise Bilingual Children", zh: "共创中文绘本馆 共育双语儿童" },
   nav_library: { en: "Community Library", zh: "社群书库" },
   nav_shelf: { en: "My Shelf", zh: "我的书架" },
   nav_account: { en: "Account", zh: "个人中心" },
@@ -33,7 +33,7 @@ const dict = {
   // Shelf
   shelf_guest_banner: {
     en: "You are viewing a temporary shelf. Become a member to permanently save your books, track reading requests, and safely share with other families!",
-    zh: "您正在查看临时书架。加入成为会员以保存您的图书、追踪借阅请求，并与其他家庭分享！",
+    zh: "您正在查看临时书架。成为会员以永久保存您的图书、追踪借阅请求，并与其他家庭安全分享！",
   },
   shelf_empty: {
     en: "You haven't contributed any books yet — tap + Contribute to add one.",
@@ -61,7 +61,7 @@ const dict = {
   account_member_since: { en: "Member since May 2025", zh: "2025年5月加入" },
   account_signup_callout: {
     en: "Right now, your contributions are stored safely on this device only. Sign up today to start managing your children's Chinese books and sharing books with the community!",
-    zh: "目前您的图书仅安全保存在此设备上。立即注册，开始管理您孩子的中文绘本并与社群成员分享吧！",
+    zh: "目前您的图书仅保存在此设备上。立即注册，开始管理您孩子的中文绘本并与社区分享图书吧！",
   },
   unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能！" },
   convert_account: { en: "Convert to Free Account", zh: "注册成为会员" },
@@ -113,8 +113,12 @@ const dict = {
   lookup_book: { en: "Look up book", zh: "查询绘本" },
   searching_db: { en: "Searching public library databases...", zh: "正在查询公共图书数据库..." },
   isbn_not_found: {
-    en: "ISBN not found in public registries. No worries! Please type the Title and Author details below to add it manually to our community library.",
-    zh: "公共数据库未找到此 ISBN。没关系！请在下方手动输入书名和作者信息，加入我们的社群绘本馆。",
+    en: "This special edition isn't in the global public registry yet! Help us document it by filling in the details below to add it to our community shelf.",
+    zh: "此版本尚未录入全球公共书库！欢迎手动填写下方信息，协助我们完善社区书架。",
+  },
+  pulled_from_cache: {
+    en: "Found in our community library — confirm details below.",
+    zh: "来自社区书库 — 请在下方确认信息。",
   },
   pulled_from_ol: {
     en: "Pulled from Open Library — confirm details below.",

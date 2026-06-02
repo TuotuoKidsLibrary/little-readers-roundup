@@ -5,7 +5,7 @@ import { AuthForm } from "@/components/AuthForm";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Welcome — 中文绘本馆" },
+      { title: "Welcome — 妥妥绘本馆" },
       { name: "description", content: "Join the community library." },
     ],
   }),
@@ -18,8 +18,8 @@ function WelcomePage() {
   return (
     <div className="mx-auto max-w-md px-4 pt-10 pb-16">
       <div className="text-center mb-8">
-        <p className="font-serif text-3xl font-bold text-primary">中文绘本馆</p>
-        <h1 className="font-serif text-2xl font-bold mt-3">A Chinese Children's Library Built by Your Community</h1>
+        <p className="font-serif text-3xl font-bold text-primary">妥妥绘本馆</p>
+        <h1 className="font-serif text-2xl font-bold mt-3">Grow Our Library, Raise Bilingual Children</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Borrow, sell & share treasured 中文 picture books with neighbor families.
         </p>
