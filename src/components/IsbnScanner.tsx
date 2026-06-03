@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import {
+  BarcodeFormat,
+  DecodeHintType,
+  type Result,
+} from "@zxing/library";
 import { Button } from "@/components/ui/button";
 import { X, Keyboard } from "lucide-react";
 import { toast } from "sonner";
@@ -9,8 +14,6 @@ interface IsbnScannerProps {
   onClose: () => void;
   onManualFallback?: () => void;
 }
-
-const REGION_ID = "isbn-scanner-region";
 
 function beep() {
   try {
@@ -37,66 +40,115 @@ function beep() {
 }
 
 export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScannerProps) {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const controlsRef = useRef<{ stop: () => void } | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const handledRef = useRef(false);
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const instance = new Html5Qrcode(REGION_ID, { verbose: false });
-    scannerRef.current = instance;
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+    ]);
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 120 });
+    let cancelled = false;
 
-    instance
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        (decoded) => {
-          if (handledRef.current) return;
-          const cleaned = decoded.replace(/[^0-9Xx]/g, "");
-          if (cleaned.length !== 13 || !cleaned.startsWith("97")) return;
-          handledRef.current = true;
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            try { navigator.vibrate?.(120); } catch { /* noop */ }
-          }
-          beep();
-          setFlash(true);
-          setTimeout(() => {
-            instance
-              .stop()
-              .catch(() => undefined)
-              .finally(() => {
-                instance.clear();
-                onDetected(cleaned);
-              });
-          }, 180);
-        },
-        () => undefined,
-      )
-      .catch((err: unknown) => {
+    const applyAutofocus = (stream: MediaStream) => {
+      const track = stream.getVideoTracks()[0];
+      if (!track) return;
+      const caps = (track.getCapabilities?.() ?? {}) as MediaTrackCapabilities & {
+        focusMode?: string[];
+      };
+      const advanced: MediaTrackConstraintSet[] = [];
+      if (caps.focusMode?.includes("continuous")) {
+        advanced.push({ focusMode: "continuous" } as MediaTrackConstraintSet);
+      }
+      if (advanced.length) {
+        track.applyConstraints({ advanced }).catch(() => undefined);
+      }
+    };
+
+    const handleResult = (result: Result | undefined) => {
+      if (handledRef.current || !result) return;
+      const cleaned = result.getText().replace(/[^0-9Xx]/g, "");
+      if (cleaned.length !== 13 || !cleaned.startsWith("97")) return;
+      handledRef.current = true;
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try { navigator.vibrate?.(120); } catch { /* noop */ }
+      }
+      beep();
+      setFlash(true);
+      setTimeout(() => {
+        stopAll();
+        onDetected(cleaned);
+      }, 180);
+    };
+
+    const stopAll = () => {
+      try { controlsRef.current?.stop(); } catch { /* noop */ }
+      controlsRef.current = null;
+      const s = streamRef.current;
+      if (s) {
+        s.getTracks().forEach((t) => { try { t.stop(); } catch { /* noop */ } });
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        applyAutofocus(stream);
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", "true");
+        await video.play().catch(() => undefined);
+        const controls = await reader.decodeFromVideoElement(video, (res) => {
+          if (res) handleResult(res);
+        });
+        controlsRef.current = controls;
+      } catch (err) {
         const msg = err instanceof Error ? err.message : "Camera unavailable";
         setError(msg);
         toast.error("Camera permission denied or unavailable. Please type the ISBN manually.");
-      });
+      }
+    })();
 
     return () => {
-      const s = scannerRef.current;
-      if (!s) return;
-      s.stop()
-        .catch(() => undefined)
-        .finally(() => {
-          try {
-            s.clear();
-          } catch {
-            /* noop */
-          }
-        });
+      cancelled = true;
+      stopAll();
     };
   }, [onDetected]);
 
   return (
     <div className="rounded-xl border border-border bg-black/90 p-2 flex flex-col gap-2">
       <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black">
-        <div id={REGION_ID} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          muted
+          playsInline
+        />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="relative h-[70%] w-[70%] rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
             <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
