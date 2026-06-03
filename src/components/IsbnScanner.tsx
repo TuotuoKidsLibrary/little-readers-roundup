@@ -170,12 +170,8 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
       <button
         type="button"
         onClick={() => {
-          const s = scannerRef.current;
-          s?.stop().catch(() => undefined).finally(() => {
-            try { s?.clear(); } catch { /* noop */ }
-            onManualFallback?.();
-            onClose();
-          });
+          onManualFallback?.();
+          onClose();
         }}
         className="mt-1 flex items-center justify-center gap-1.5 rounded-md bg-white/90 hover:bg-white text-foreground text-xs font-medium py-2 transition-colors"
       >
