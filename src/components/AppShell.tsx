@@ -45,8 +45,11 @@ export function AppShell() {
       {/* Top header — desktop nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 h-16 flex items-center gap-4">
-          <Link to="/" className="flex items-baseline gap-2 shrink-0">
-            <span className="font-serif font-bold text-xl sm:text-2xl text-primary tracking-tight whitespace-nowrap">
+          <Link to="/" className="flex items-baseline gap-2 shrink-0 min-w-0">
+            <span
+              className="font-serif font-bold text-primary tracking-tight whitespace-nowrap"
+              style={{ fontSize: "clamp(1rem, 4.5vw, 1.5rem)" }}
+            >
               {t("brand_name")}
             </span>
           </Link>

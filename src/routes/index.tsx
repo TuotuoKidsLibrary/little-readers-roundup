@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { books } = useStore();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [q, setQ] = useState("");
   const [script, setScript] = useState<ScriptType | "all">("all");
   const [age, setAge] = useState<AgeRange | "all">("all");
@@ -100,8 +100,21 @@ function Index() {
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
-          {t("slogan")}
+        <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-center sm:text-left">
+          {lang === "en" ? (
+            <>
+              <span className="md:hidden">
+                Grow Our Library
+                <br />
+                Raise Bilingual Children
+              </span>
+              <span className="hidden md:inline whitespace-nowrap">
+                Grow Our Library, Raise Bilingual Children
+              </span>
+            </>
+          ) : (
+            t("slogan")
+          )}
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl">
           {t("home_subtitle")}
