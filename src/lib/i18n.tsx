@@ -115,7 +115,7 @@ const dict = {
   searching_db: { en: "Searching public library databases...", zh: "正在查询公共图书数据库..." },
   isbn_not_found: {
     en: "This special edition isn't in the global public registry yet! Help us document it by filling in the details below to add it to our community shelf.",
-    zh: "此版本尚未录入全球公共书库！欢迎手动填写下方信息，协助我们完善绘本馆书库。",
+    zh: "此版本尚未录入全球公共书库！欢迎手动填写下方信息，协助我们完善社区书架。",
   },
   pulled_from_cache: {
     en: "Found in our community library — confirm details below.",
