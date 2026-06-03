@@ -156,7 +156,7 @@ const dict = {
   our_story_title: { en: "Our Story & Mission", zh: "我们的初衷" },
   our_story_body: {
     en: "As parents raising bilingual children, we know firsthand how difficult and expensive it can be to source high-quality, physical Chinese children's books locally. Often, beautiful books sit isolated on individual family shelves once read.\n\nDo you wish that you had easier access to Chinese children's books, just like a local library provides for English children's books? Do you wish that you could easily rehome the Chinese children's books you've perhaps lugged all the way across the ocean, which your kids have now outgrown and are left collecting dust?\n\nWe built this club to change that. By safely sharing our home libraries, we aren't just recycling stories. Together, we can build a thriving community that keeps our heritage language alive and raises confident, bilingual children.",
-    zh: "作为培养双语儿童的父母，我们深知在国内以外的地方获取高质量、纸质中文绘本有多么困难且昂贵。很多时候，优秀的绘本在被自家孩子读完后，就只能孤零零地躺在书架上。\n\n您是否也希望像使用本地英文图书馆那样，能够轻而易举地借阅到丰富的中文儿童绘本？您是否也曾为了给孩子带书，不远万里把一箱箱中文绘本跨洋背过来，而现在孩子长大了，这些书只能在角落里落灰，您希望能为它们找到一个温暖的新家？\n\n我们创建这个绘本馆正是为了改变这一现状。通过分享我们各自的家庭藏书，我们不仅是在让故事流动起来——更是在共同打造一个属于我们大家的全国性中文绘本网络。齐心协力，我们可以建立一个充满活力的社区，让汉语文化生生不息，共同培养自信的双语儿童。",
+    zh: "作为培养双语儿童的父母，我们深知在国内以外的地方获取高质量、纸质中文绘本有多么困难且昂贵。很多时候，优秀的绘本在被自家孩子读完后，就只能孤零零地躺在书架上。\n\n您是否也希望像使用本地英文图书馆那样，能够轻而易举地借阅到丰富的儿童绘本？您是否也曾为了给孩子带书，不远万里把一箱箱中文绘本跨洋背过来，而现在孩子长大了，这些书只能在角落里落灰，您希望能为它们找到一个温暖的新家？\n\n我们创建这个绘本馆正是为了改变这一现状。通过分享我们各自的家庭藏书，我们不仅是在让故事流动起来——更是在共同打造一个属于我们大家的中文绘本网络。齐心协力，我们可以建立一个充满活力的社群，让汉语文化生生不息，共同培养自信的双语儿童。",
   },
 } as const;
 
