@@ -49,7 +49,7 @@ function ShelfPage() {
           />
         </div>
       )}
-      <h1 className="font-serif text-3xl font-bold mb-1 break-words">{t("shelf_title")}</h1>
+      <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold mb-1 whitespace-nowrap">{t("shelf_title")}</h1>
       <p className="text-sm text-muted-foreground mb-5">{t("shelf_subtitle")}</p>
 
       <Tabs defaultValue="contrib" className="w-full">
