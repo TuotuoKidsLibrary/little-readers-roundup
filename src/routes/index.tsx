@@ -100,9 +100,9 @@ function Index() {
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
-        <h1 className="font-serif text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center sm:text-left max-w-[18ch] sm:max-w-none mx-auto sm:mx-0">
+        <h1 className="font-serif text-[11px] sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-center sm:text-left whitespace-nowrap mx-auto sm:mx-0">
           {lang === "en"
-            ? "Grow Our Library, Raise Bilingual Children"
+            ? "Grow Our Library | Raise Bilingual Children"
             : t("slogan")}
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl">
