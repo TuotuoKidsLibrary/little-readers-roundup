@@ -26,7 +26,7 @@ function AccountPage() {
   const { t } = useI18n();
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 space-y-5">
-      <h1 className="font-serif text-3xl font-bold break-words">{t("account_title")}</h1>
+      <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap">{t("account_title")}</h1>
 
       <Card className="p-5 bg-card space-y-5">
         <div className="flex items-center gap-4">

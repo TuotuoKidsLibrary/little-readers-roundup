@@ -100,21 +100,10 @@ function Index() {
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-center sm:text-left">
-          {lang === "en" ? (
-            <>
-              <span className="md:hidden">
-                Grow Our Library
-                <br />
-                Raise Bilingual Children
-              </span>
-              <span className="hidden md:inline whitespace-nowrap">
-                Grow Our Library, Raise Bilingual Children
-              </span>
-            </>
-          ) : (
-            t("slogan")
-          )}
+        <h1 className="font-serif text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center sm:text-left max-w-[18ch] sm:max-w-none mx-auto sm:mx-0">
+          {lang === "en"
+            ? "Grow Our Library, Raise Bilingual Children"
+            : t("slogan")}
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl">
           {t("home_subtitle")}

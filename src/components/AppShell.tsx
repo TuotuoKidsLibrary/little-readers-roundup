@@ -41,14 +41,14 @@ export function AppShell() {
   const initials = user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground max-w-full overflow-x-hidden">
       {/* Top header — desktop nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center gap-4">
-          <Link to="/" className="flex items-baseline gap-2 shrink-0 min-w-0">
+        <div className="mx-auto max-w-6xl px-3 sm:px-4 min-h-16 py-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Link to="/" className="flex items-baseline gap-2 min-w-0 flex-1 sm:flex-none">
             <span
-              className="font-serif font-bold text-primary tracking-tight whitespace-nowrap"
-              style={{ fontSize: "clamp(1rem, 4.5vw, 1.5rem)" }}
+              className="font-serif font-bold text-primary tracking-tight whitespace-nowrap truncate"
+              style={{ fontSize: "clamp(0.95rem, 4vw, 1.5rem)" }}
             >
               {t("brand_name")}
             </span>
@@ -73,12 +73,12 @@ export function AppShell() {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
             <button
               type="button"
               onClick={toggle}
               aria-label="Toggle language"
-              className="rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+              className="rounded-full border border-border/70 px-2.5 py-1 text-xs font-medium text-foreground/70 hover:text-foreground hover:bg-muted transition-colors whitespace-nowrap shrink-0"
             >
               <span className={lang === "en" ? "text-primary font-semibold" : ""}>EN</span>
               <span className="mx-1 text-muted-foreground">|</span>
