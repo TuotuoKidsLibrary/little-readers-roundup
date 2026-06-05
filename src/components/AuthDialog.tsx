@@ -7,14 +7,10 @@ export function AuthDialog({
   trigger,
   open: openProp,
   onOpenChange,
-  title = "Welcome to 妥妥绘本馆",
-  description = "Log in or create a free account to join the community.",
 }: {
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (o: boolean) => void;
-  title?: string;
-  description?: string;
 }) {
   const [internal, setInternal] = useState(false);
   const controlled = openProp !== undefined;
