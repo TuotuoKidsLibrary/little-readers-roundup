@@ -89,7 +89,6 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
           qrbox: { width: 280, height: 120 },
           aspectRatio: 1.7777,
           disableFlip: true,
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
         },
         (decoded) => {
           if (handledRef.current) return;
