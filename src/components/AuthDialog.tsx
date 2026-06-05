@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { AuthForm } from "./AuthForm";
+import { useI18n } from "@/lib/i18n";
 
 export function AuthDialog({
   trigger,
