@@ -12,6 +12,7 @@ export function AuthDialog({
   open?: boolean;
   onOpenChange?: (o: boolean) => void;
 }) {
+  const { t } = useI18n();
   const [internal, setInternal] = useState(false);
   const controlled = openProp !== undefined;
   const open = controlled ? openProp! : internal;
@@ -25,8 +26,8 @@ export function AuthDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="bg-card max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle className="font-serif text-2xl">{t("login_title")}</DialogTitle>
+          <DialogDescription>{t("login_description")}</DialogDescription>
         </DialogHeader>
         <AuthForm onSuccess={() => setOpen(false)} />
       </DialogContent>
