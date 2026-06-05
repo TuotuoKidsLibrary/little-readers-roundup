@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { X, Keyboard } from "lucide-react";
 import { toast } from "sonner";
@@ -39,19 +39,63 @@ function beep() {
 export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const handledRef = useRef(false);
+  const lastDecodeRef = useRef(0);
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const instance = new Html5Qrcode(REGION_ID, { verbose: false });
+    const instance = new Html5Qrcode(REGION_ID, {
+      verbose: false,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+      ],
+      useBarCodeDetectorIfSupported: true,
+    });
     scannerRef.current = instance;
+
+    const stopAndClear = () => {
+      const s = scannerRef.current;
+      if (!s) return Promise.resolve();
+      return s
+        .stop()
+        .catch(() => undefined)
+        .finally(() => {
+          try {
+            s.clear();
+          } catch {
+            /* noop */
+          }
+          // Force-release any lingering MediaStream tracks
+          try {
+            const video = document.querySelector(
+              `#${REGION_ID} video`,
+            ) as HTMLVideoElement | null;
+            const stream = video?.srcObject as MediaStream | null;
+            stream?.getTracks().forEach((t) => t.stop());
+            if (video) video.srcObject = null;
+          } catch {
+            /* noop */
+          }
+          scannerRef.current = null;
+        });
+    };
 
     instance
       .start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
+        {
+          fps: 4,
+          qrbox: { width: 280, height: 120 },
+          aspectRatio: 1.7777,
+          disableFlip: true,
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        },
         (decoded) => {
           if (handledRef.current) return;
+          const now = Date.now();
+          if (now - lastDecodeRef.current < 250) return;
+          lastDecodeRef.current = now;
           const cleaned = decoded.replace(/[^0-9Xx]/g, "");
           if (cleaned.length !== 13 || !cleaned.startsWith("97")) return;
           handledRef.current = true;
@@ -61,13 +105,7 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
           beep();
           setFlash(true);
           setTimeout(() => {
-            instance
-              .stop()
-              .catch(() => undefined)
-              .finally(() => {
-                instance.clear();
-                onDetected(cleaned);
-              });
+            stopAndClear().finally(() => onDetected(cleaned));
           }, 180);
         },
         () => undefined,
@@ -79,17 +117,7 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
       });
 
     return () => {
-      const s = scannerRef.current;
-      if (!s) return;
-      s.stop()
-        .catch(() => undefined)
-        .finally(() => {
-          try {
-            s.clear();
-          } catch {
-            /* noop */
-          }
-        });
+      stopAndClear();
     };
   }, [onDetected]);
 
@@ -119,10 +147,23 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
         type="button"
         onClick={() => {
           const s = scannerRef.current;
-          s?.stop().catch(() => undefined).finally(() => {
-            try { s?.clear(); } catch { /* noop */ }
+          const done = () => {
+            try {
+              const video = document.querySelector(
+                `#${REGION_ID} video`,
+              ) as HTMLVideoElement | null;
+              const stream = video?.srcObject as MediaStream | null;
+              stream?.getTracks().forEach((t) => t.stop());
+              if (video) video.srcObject = null;
+            } catch { /* noop */ }
+            scannerRef.current = null;
             onManualFallback?.();
             onClose();
+          };
+          if (!s) return done();
+          s.stop().catch(() => undefined).finally(() => {
+            try { s.clear(); } catch { /* noop */ }
+            done();
           });
         }}
         className="mt-1 flex items-center justify-center gap-1.5 rounded-md bg-white/90 hover:bg-white text-foreground text-xs font-medium py-2 transition-colors"
