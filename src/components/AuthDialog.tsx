@@ -1,20 +1,18 @@
 import { useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { AuthForm } from "./AuthForm";
+import { useI18n } from "@/lib/i18n";
 
 export function AuthDialog({
   trigger,
   open: openProp,
   onOpenChange,
-  title = "Welcome to 妥妥绘本馆",
-  description = "Log in or create a free account to join the community.",
 }: {
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (o: boolean) => void;
-  title?: string;
-  description?: string;
 }) {
+  const { t } = useI18n();
   const [internal, setInternal] = useState(false);
   const controlled = openProp !== undefined;
   const open = controlled ? openProp! : internal;
@@ -28,8 +26,8 @@ export function AuthDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="bg-card max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle className="font-serif text-2xl">{t("login_title")}</DialogTitle>
+          <DialogDescription>{t("login_description")}</DialogDescription>
         </DialogHeader>
         <AuthForm onSuccess={() => setOpen(false)} />
       </DialogContent>
