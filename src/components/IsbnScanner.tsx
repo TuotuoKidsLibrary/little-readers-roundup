@@ -43,14 +43,23 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Keep latest onDetected without re-running the camera init effect
+  const onDetectedRef = useRef(onDetected);
   useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     const instance = new Html5Qrcode(REGION_ID, {
       verbose: false,
       formatsToSupport: [
         Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
       ],
-      useBarCodeDetectorIfSupported: true,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
     });
     scannerRef.current = instance;
 
@@ -66,7 +75,6 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
           } catch {
             /* noop */
           }
-          // Force-release any lingering MediaStream tracks
           try {
             const video = document.querySelector(
               `#${REGION_ID} video`,
@@ -81,44 +89,55 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
         });
     };
 
-    instance
-      .start(
-        { facingMode: "environment" },
-        {
-          fps: 4,
-          qrbox: { width: 280, height: 120 },
-          aspectRatio: 1.7777,
-          disableFlip: true,
-        },
-        (decoded) => {
-          if (handledRef.current) return;
-          const now = Date.now();
-          if (now - lastDecodeRef.current < 250) return;
-          lastDecodeRef.current = now;
-          const cleaned = decoded.replace(/[^0-9Xx]/g, "");
-          if (cleaned.length !== 13 || !cleaned.startsWith("97")) return;
-          handledRef.current = true;
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            try { navigator.vibrate?.(120); } catch { /* noop */ }
-          }
-          beep();
-          setFlash(true);
-          setTimeout(() => {
-            stopAndClear().finally(() => onDetected(cleaned));
-          }, 180);
-        },
-        () => undefined,
-      )
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Camera unavailable";
-        setError(msg);
-        toast.error("Camera permission denied or unavailable. Please type the ISBN manually.");
-      });
+    // Let DOM paint the region container before mounting camera
+    const initTimeout = setTimeout(() => {
+      if (!isMounted) return;
+      instance
+        .start(
+          { facingMode: "environment" },
+          {
+            fps: 15,
+            qrbox: (vw: number, vh: number) => {
+              const width = Math.min(vw * 0.85, 300);
+              const height = Math.min(vh * 0.25, 110);
+              return { width, height };
+            },
+            disableFlip: true,
+          },
+          (decoded) => {
+            if (handledRef.current) return;
+            const now = Date.now();
+            if (now - lastDecodeRef.current < 200) return;
+            lastDecodeRef.current = now;
+            const cleaned = decoded.replace(/[^0-9Xx]/g, "");
+            if (cleaned.length >= 12 && cleaned.startsWith("97")) {
+              handledRef.current = true;
+              if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                try { navigator.vibrate?.(120); } catch { /* noop */ }
+              }
+              beep();
+              setFlash(true);
+              setTimeout(() => {
+                stopAndClear().finally(() => onDetectedRef.current(cleaned));
+              }, 100);
+            }
+          },
+          () => undefined,
+        )
+        .catch((err: unknown) => {
+          if (!isMounted) return;
+          const msg = err instanceof Error ? err.message : "Camera unavailable";
+          setError(msg);
+          toast.error("Camera permission denied or unavailable. Please type the ISBN manually.");
+        });
+    }, 150);
 
     return () => {
+      isMounted = false;
+      clearTimeout(initTimeout);
       stopAndClear();
     };
-  }, [onDetected]);
+  }, []);
 
   return (
     <div className="rounded-xl border border-border bg-black/90 p-2 flex flex-col gap-2">
