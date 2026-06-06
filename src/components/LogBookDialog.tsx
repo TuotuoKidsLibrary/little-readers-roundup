@@ -36,6 +36,8 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [status, setStatus] = useState<BookStatus>("available");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
+  const [titleZh, setTitleZh] = useState("");
+  const [authorZh, setAuthorZh] = useState("");
   const [isbn, setIsbn] = useState("");
   const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
   const [script, setScript] = useState<ScriptType>("Simplified");
@@ -50,6 +52,8 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setStatus("available");
     setTitle("");
     setAuthor("");
+    setTitleZh("");
+    setAuthorZh("");
     setIsbn("");
     setCoverUrl(undefined);
     setScript("Simplified");
@@ -137,9 +141,21 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       toast.error("Please enter the book title.");
       return;
     }
+    if (script === "Bilingual" && !titleZh.trim()) {
+      toast.error("Bilingual books require both English and Chinese titles.");
+      return;
+    }
+    const finalTitle =
+      script === "Bilingual" && titleZh.trim()
+        ? `${title.trim()} / ${titleZh.trim()}`
+        : title.trim();
+    const finalAuthor =
+      script === "Bilingual" && authorZh.trim()
+        ? `${author.trim() || "Unknown"} / ${authorZh.trim()}`
+        : author.trim() || "Unknown";
     addBook({
-      title: title.trim(),
-      author: author.trim() || "Unknown",
+      title: finalTitle,
+      author: finalAuthor,
       isbn: isbn.trim() || "—",
       script_type: script,
       age_range: age,
@@ -344,26 +360,63 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             </p>
             <div className="flex flex-col gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="title">{t("book_title")}</Label>
+                <Label>{t("script_type")}</Label>
+                <RadioGroup
+                  value={script}
+                  onValueChange={(v) => setScript(v as ScriptType)}
+                  className="grid grid-cols-3 gap-2"
+                >
+                  {(["Simplified", "Traditional", "Bilingual"] as ScriptType[]).map((s) => {
+                    const label =
+                      s === "Simplified"
+                        ? t("script_label_simplified")
+                        : s === "Traditional"
+                          ? t("script_label_traditional")
+                          : t("script_label_bilingual");
+                    return (
+                      <Label
+                        key={s}
+                        className={`cursor-pointer rounded-md border px-2 py-2 text-center text-sm font-medium leading-tight whitespace-nowrap ${
+                          script === s ? "border-primary bg-primary/5" : "border-border"
+                        }`}
+                      >
+                        <RadioGroupItem value={s} className="sr-only" />
+                        {label}
+                      </Label>
+                    );
+                  })}
+                </RadioGroup>
+              </div>
+              {script === "Bilingual" && (
+                <p className="text-xs text-foreground/80 rounded-lg bg-accent/40 border border-accent p-2.5">
+                  {t("bilingual_hint")}
+                </p>
+              )}
+              <div className="grid gap-1.5">
+                <Label htmlFor="title">
+                  {script === "Bilingual" ? t("title_en_label") : t("book_title")}
+                </Label>
                 <Input id="title" ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：好饿的毛毛虫" />
               </div>
+              {script === "Bilingual" && (
+                <div className="grid gap-1.5">
+                  <Label htmlFor="title_zh">{t("title_zh_label")}</Label>
+                  <Input id="title_zh" value={titleZh} onChange={(e) => setTitleZh(e.target.value)} placeholder="例如：好饿的毛毛虫" />
+                </div>
+              )}
               <div className="grid gap-1.5">
-                <Label htmlFor="author">{t("author")}</Label>
+                <Label htmlFor="author">
+                  {script === "Bilingual" ? t("author_en_label") : t("author")}
+                </Label>
                 <Input id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              {script === "Bilingual" && (
                 <div className="grid gap-1.5">
-                  <Label>{t("script_type")}</Label>
-                  <RadioGroup value={script} onValueChange={(v) => setScript(v as ScriptType)} className="flex gap-2">
-                    {(["Simplified", "Traditional"] as ScriptType[]).map((s) => (
-                      <Label key={s} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
-                        <RadioGroupItem value={s} className="sr-only" />
-                        {s === "Simplified" ? "简体" : "繁體"}
-                      </Label>
-                    ))}
-                  </RadioGroup>
+                  <Label htmlFor="author_zh">{t("author_zh_label")}</Label>
+                  <Input id="author_zh" value={authorZh} onChange={(e) => setAuthorZh(e.target.value)} />
                 </div>
-                <div className="grid gap-1.5">
+              )}
+              <div className="grid gap-1.5">
                   <Label>{t("age_range")}</Label>
                   <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-1">
                     {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
@@ -374,7 +427,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
                     ))}
                   </RadioGroup>
                 </div>
-              </div>
             </div>
           </div>
 
