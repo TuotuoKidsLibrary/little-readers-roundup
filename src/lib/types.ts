@@ -1,4 +1,4 @@
-export type ScriptType = "Simplified" | "Traditional" | "Bilingual";
+export type ScriptType = "Simplified" | "Traditional";
 export type AgeRange = "0-2" | "3-5" | "6+";
 export type BookStatus = "available" | "reserved" | "for_sale" | "donation" | "private";
 

@@ -24,7 +24,7 @@ export function BookCard({ book, onClick }: { book: Book; onClick: () => void })
         <p className="text-xs text-muted-foreground truncate">{book.author}</p>
         <div className="flex flex-wrap gap-1 mt-auto pt-1">
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/70">
-            {book.script_type === "Simplified" ? "简" : book.script_type === "Traditional" ? "繁" : "中英"} · {book.age_range}
+            {book.script_type === "Simplified" ? "简" : "繁"} · {book.age_range}
           </Badge>
           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${s.cls}`}>
             {s.label}
