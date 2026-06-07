@@ -63,8 +63,8 @@ function Index() {
         value={script}
         options={[
           { v: "all", l: "All" },
-          { v: "Simplified", l: "简体 Simplified" },
-          { v: "Traditional", l: "繁體 Traditional" },
+          { v: "Simplified", l: "Simplified" },
+          { v: "Traditional", l: "Traditional" },
         ]}
         onChange={(v) => setScript(v as ScriptType | "all")}
       />
@@ -96,13 +96,12 @@ function Index() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
-      {/* 🛠️ Fixed parent element alignment wrapper to enforce left alignment */}
+      
       <section className="mb-6 flex flex-col items-start gap-1.5 text-left">
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
         
-        {/* 🛠️ Replaced font-serif with font-sans, removed text-center, forced text-left layout on all viewports */}
         <h1 className="font-sans text-[4.3vw] sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-left whitespace-nowrap w-full">
           {lang === "en"
             ? "Grow Our Library | Raise Bilingual Children"
