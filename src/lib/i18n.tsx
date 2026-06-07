@@ -5,13 +5,11 @@ export type Lang = "en" | "zh";
 const STORAGE_KEY = "app_lang_v1";
 
 const dict = {
-  // Brand & nav
   brand_name: { en: "Tuotuo Kids Library", zh: "妥妥绘本馆" },
   slogan: { en: "Grow Our Library, Raise Bilingual Children", zh: "共创中文绘本馆 培养双语儿童" },
   nav_library: { en: "Community Library", zh: "社群书库" },
   nav_shelf: { en: "My Shelf", zh: "我的书架" },
   nav_account: { en: "Account", zh: "个人中心" },
-  // Buttons / inputs
   contribute: { en: "Contribute", zh: "分享绘本" },
   contribute_plus: { en: "+ Contribute", zh: "+ 分享绘本" },
   search_placeholder: {
@@ -21,20 +19,17 @@ const dict = {
   scan_isbn: { en: "Scan ISBN Barcode", zh: "扫描ISBN条形码" },
   log_in: { en: "Log In", zh: "登录" },
   log_out: { en: "Log Out", zh: "退出登录" },
-  // Statuses
   status_lend: { en: "Lend", zh: "借阅" },
   status_sell: { en: "Sell", zh: "出售" },
   status_donate: { en: "Donate", zh: "捐赠" },
   status_private: { en: "Private", zh: "私有" },
-  // Home
   home_subtitle: {
     en: "Books contributed by families across the club. Tap any book to view the book status and arrange a meetup, porch pickup, or Media Mail.",
     zh: "绘本馆会员家庭分享的图书。点击任意图书查阅图书状态并安排自提、面交或邮寄。",
   },
-  // Shelf
   shelf_guest_banner: {
     en: "You are viewing a temporary shelf. Become a member to permanently save your books, track reading requests, and safely share with other families!",
-    zh: "您正在查看临时书架。成为会员以永久保存您的图书、追踪借阅请求，并与其他家庭安全分享！",
+    zh: "您正在查看临时书架。成为会员以保存您的图书、追踪借阅请求，并与其他家庭分享！",
   },
   shelf_empty: {
     en: "You haven't contributed any books yet — tap + Contribute to add one.",
@@ -55,7 +50,6 @@ const dict = {
   no_conversations: { en: "No conversations yet.", zh: "暂无对话。" },
   pick_conversation: { en: "Pick a conversation to start chatting.", zh: "选择一个对话开始聊天。" },
   send_message_placeholder: { en: "Send a message…", zh: "发送消息…" },
-  // Account
   account_title: { en: "Account & Membership", zh: "账号和会员信息" },
   account_guest_name: { en: "Guest", zh: "访客" },
   account_guest_subtitle: { en: "Books saved on this device only", zh: "图书仅保存在此设备上" },
@@ -67,7 +61,7 @@ const dict = {
   unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能！" },
   convert_account: { en: "Become a Member", zh: "成为会员" },
   login_title: { en: "Welcome to Tuotuo Kids Library", zh: "欢迎来到妥妥绘本馆" },
-  login_description: { en: "Log in or create a free account to join the community", zh: "登录或创建账户加入我们的社群" },
+  login_description: { en: "Log in or create a free account to join the community", zh: "登录 or 创建账户加入我们的社群" },
   edit: { en: "Edit", zh: "编辑" },
   neighborhood_label: { en: "Neighborhood / Community Name", zh: "所在社区" },
   zip_label: { en: "Zip Code", zh: "邮政编码" },
@@ -91,7 +85,6 @@ const dict = {
   expiry: { en: "Expiry", zh: "有效期" },
   cvc: { en: "CVC", zh: "安全码" },
   save_payment: { en: "Save payment method", zh: "保存支付方式" },
-  // Auth form
   login_tab: { en: "Login", zh: "登录" },
   signup_tab: { en: "Sign Up", zh: "注册" },
   create_account_long: { en: "Create an Account", zh: "创建账户" },
@@ -102,7 +95,6 @@ const dict = {
   zip: { en: "Zip Code", zh: "邮政编码" },
   create_my_account: { en: "Create my account", zh: "创建账户" },
   welcome_back: { en: "Welcome back!", zh: "欢迎回来！" },
-  // Contribute modal
   contribute_title: { en: "Contribute a book", zh: "分享一本绘本" },
   contribute_subtitle: {
     en: "Start by scanning or entering the ISBN, then pick how to share it.",
@@ -154,12 +146,23 @@ const dict = {
   sell_sub: { en: "Set an asking price; buyer pays you directly.", zh: "设定售价，买家直接付款给您。" },
   donate_sub: { en: "Goes into the central Library collection.", zh: "捐入中央绘本馆收藏。" },
   private_sub: { en: "Only visible to you on your My Contributions tab.", zh: "仅在您的个人书架可见。" },
-  // Our Story
   our_story_title: { en: "Our Story & Mission", zh: "我们的初衷" },
   our_story_body: {
     en: "As parents raising bilingual children, we know firsthand how difficult and expensive it can be to source high-quality, physical Chinese children's books locally. Often, beautiful books sit isolated on individual family shelves once read.\n\nDo you wish that you had easier access to Chinese children's books, just like a local library provides for English children's books? Do you wish that you could easily rehome the Chinese children's books you've perhaps lugged all the way across the ocean, which your kids have now outgrown and are left collecting dust?\n\nWe built this club to change that. By safely sharing our home libraries, we aren't just recycling stories. Together, we can build a thriving community that keeps our heritage language alive and raises confident, bilingual children.",
     zh: "作为培养双语儿童的父母，我们深知在国内以外的地方获取高质量、纸质中文绘本有多么困难且昂贵。很多时候，优秀的绘本在被自家孩子读完后，就只能孤零零地躺在书架上。\n\n您是否也希望像使用本地英文图书馆那样，能够轻而易举地借阅到丰富的儿童绘本？您是否也曾为了给孩子带书，不远万里把一箱箱中文绘本跨洋背过来，而现在孩子长大了，这些书只能在角落里落灰，您希望能为它们找到一个温暖的新家？\n\n我们创建这个绘本馆正是为了改变这一现状。通过分享我们各自的家庭藏书，我们不仅是在让故事流动起来——更是在共同打造一个属于我们大家的中文绘本网络。齐心协力，我们可以建立一个充满活力的社群，让汉语文化生生不息，共同培养自信的双语儿童。",
   },
+  book_details_title: { en: "Book Details", zh: "绘本详情" },
+  exchange_subtitle: { en: "Review and arrange this exchange.", zh: "查阅并安排此次分享。" },
+  shared_by: { en: "Shared by", zh: "分享者" },
+  save_for_later: { en: "Save for Later", zh: "稍后阅读" },
+  fulfillment_title: { en: "Fulfillment Details", zh: "取书方式" },
+  fulfillment_desc: { en: "Choose how you'd like to receive this book.", zh: "选择您方便的取书渠道。" },
+  message_to_owner: { en: "Message to Owner", zh: "给书主的留言" },
+  message_hint: { en: "(Optional details, preferred times, etc.)", zh: "（可选：方便的取书时间等）" },
+  message_placeholder: { en: "Hey! Saturdays after 10am work best for me…", zh: "您好！我周六上午10点之后方便自提…" },
+  btn_back: { en: "Back", zh: "返回" },
+  btn_submit: { en: "Submit Request", zh: "确认提交" },
+  btn_reserved: { en: "Currently Reserved", zh: "已被预约" },
 } as const;
 
 export type TKey = keyof typeof dict;
