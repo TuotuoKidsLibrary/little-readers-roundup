@@ -62,7 +62,7 @@ const dict = {
   account_member_since: { en: "Member since May 2025", zh: "2025年5月加入" },
   account_signup_callout: {
     en: "Right now, your contributions are stored safely on this device only. Sign up today to start managing your children's Chinese books and sharing books with the community!",
-    zh: "目前您的图书仅保存在此设备上。立即注册，开始管理您孩子的中文绘本并与社区分享图书吧！",
+    zh: "目前您的图书仅保存在此设备上。立即注册，开始管理您孩子的中文绘本并与社群分享图书吧！",
   },
   unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能！" },
   convert_account: { en: "Become a Member", zh: "成为会员" },
@@ -117,11 +117,11 @@ const dict = {
   searching_db: { en: "Searching public library databases...", zh: "正在查询公共图书数据库..." },
   isbn_not_found: {
     en: "This special edition isn't in the global public registry yet! Help us document it by filling in the details below to add it to our community shelf.",
-    zh: "此版本尚未录入全球公共书库！欢迎手动填写下方信息，协助我们完善社区书架。",
+    zh: "此版本尚未录入全球公共书库！欢迎手动填写下方信息，协助我们完善社群书架。",
   },
   pulled_from_cache: {
     en: "Found in our community library — confirm details below.",
-    zh: "来自社区书库 — 请在下方确认信息。",
+    zh: "来自社群书库 — 请在下方确认信息。",
   },
   pulled_from_ol: {
     en: "Pulled from Open Library — confirm details below.",
@@ -141,10 +141,10 @@ const dict = {
     en: "Keep track of your personal collection privately—you can easily toggle this to public when your kids outgrow it!",
     zh: "私密保存您的个人藏书 — 等孩子长大后可一键切换为公开分享！",
   },
-  script_type: { en: "Script Type", zh: "字体简繁" },
+  script_type: { en: "Script Type", zh: "中文字体" },
   select_script_type: { en: "Select Script Type", zh: "选择字体" },
-  script_simplified: { en: "Simplified Chinese", zh: "简体中文" },
-  script_traditional: { en: "Traditional Chinese", zh: "繁体中文" },
+  script_simplified: { en: "Simplified Chinese", zh: "简体" },
+  script_traditional: { en: "Traditional Chinese", zh: "繁体" },
   age_range: { en: "Age Range", zh: "适用年龄" },
   select_age_range: { en: "Select Age Range", zh: "选择年龄段" },
   age_0_2: { en: "0-2 Years Old", zh: "0-2 岁" },
