@@ -91,10 +91,9 @@ export function IsbnScanner({ onDetected, onClose }: IsbnScannerProps) {
           { facingMode: "environment" },
           {
             fps: 15,
-            /* 🛠️ Adjusted the engine's capture bounding box properties to match your layout frame */
             qrbox: (vw: number, vh: number) => {
-              const width = Math.min(vw * 0.90, 340);
-              const height = Math.min(vh * 0.20, 80);
+              const width = Math.min(vw * 0.88, 360);
+              const height = Math.min(vh * 0.28, 140);
               return { width, height };
             },
             disableFlip: true,
@@ -123,6 +122,27 @@ export function IsbnScanner({ onDetected, onClose }: IsbnScannerProps) {
           },
           () => undefined,
         )
+        .then(() => {
+          if (!isMounted) return;
+          setTimeout(async () => {
+            try {
+              const s = scannerRef.current;
+              if (!s) return;
+              const capabilities = s.getRunningTrackCameraCapabilities?.();
+              if (capabilities?.torchFeature?.()?.isSupported?.()) {
+                await s.applyVideoConstraints({
+                  advanced: [{ torch: true } as any]
+                });
+              } else {
+                await s.applyVideoConstraints({
+                  advanced: [{ torch: true } as any]
+                });
+              }
+            } catch {
+              /* ignore torch constraint failures on unsupported mobile browsers */
+            }
+          }, 300);
+        })
         .catch((err: unknown) => {
           if (!isMounted) return;
           const msg = err instanceof Error ? err.message : "Camera unavailable";
@@ -143,10 +163,9 @@ export function IsbnScanner({ onDetected, onClose }: IsbnScannerProps) {
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-black">
         <div id={REGION_ID} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
 
-        {/* 🛠️ Aligned the visual overlay borders to use identical width/height configurations */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
-          <div className="relative h-[20%] w-[90%] rounded-xl border-2 border-emerald-400 bg-emerald-500/10 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
-            <div className="absolute left-0 right-0 top-1/2 h-[1.5px] -translate-y-1/2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+          <div className="relative h-[28%] w-[88%] max-w-[360px] max-h-[140px] rounded-2xl border-2 border-emerald-400 bg-emerald-500/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]">
+            <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
           </div>
         </div>
 
