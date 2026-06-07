@@ -4,11 +4,11 @@ import type { Book } from "@/lib/types";
 import { BookCover } from "./BookCover";
 
 const statusLabel: Record<Book["status"], { label: string; cls: string }> = {
-  available: { label: "Available", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  reserved: { label: "Reserved", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  for_sale: { label: "For Sale", cls: "bg-primary/15 text-primary border-primary/30" },
-  donation: { label: "Donation", cls: "bg-accent text-accent-foreground border-accent" },
-  private: { label: "Private", cls: "bg-muted text-muted-foreground border-border" },
+  available: { label: "Available / 可借", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  reserved: { label: "Reserved / 已预约", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+  for_sale: { label: "For Sale / 出售", cls: "bg-primary/15 text-primary border-primary/30" },
+  donation: { label: "Donation / 捐赠", cls: "bg-accent text-accent-foreground border-accent" },
+  private: { label: "Private / 私有", cls: "bg-muted text-muted-foreground border-border" },
 };
 
 export function BookCard({ book, onClick }: { book: Book; onClick: () => void }) {
@@ -20,7 +20,7 @@ export function BookCard({ book, onClick }: { book: Book; onClick: () => void })
     >
       <BookCover book={book} size="sm" />
       <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <h3 className="font-serif font-bold text-base leading-snug truncate">{book.title}</h3>
+        <h3 className="font-sans font-bold text-base leading-snug truncate">{book.title}</h3>
         <p className="text-xs text-muted-foreground truncate">{book.author}</p>
         <div className="flex flex-wrap gap-1 mt-auto pt-1">
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/70">
