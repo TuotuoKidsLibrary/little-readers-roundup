@@ -2,17 +2,20 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Book } from "@/lib/types";
 import { BookCover } from "./BookCover";
+import { useI18n } from "@/lib/i18n"; 
 
-const statusLabel: Record<Book["status"], { label: string; cls: string }> = {
-  available: { label: "Available / 可借", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  reserved: { label: "Reserved / 已预约", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  for_sale: { label: "For Sale / 出售", cls: "bg-primary/15 text-primary border-primary/30" },
-  donation: { label: "Donation / 捐赠", cls: "bg-accent text-accent-foreground border-accent" },
-  private: { label: "Private / 私有", cls: "bg-muted text-muted-foreground border-border" },
+const statusConfig: Record<Book["status"], { key: "status_lend" | "status_sell" | "status_donate" | "status_private" | "btn_reserved"; cls: string }> = {
+  available: { key: "status_lend", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  reserved: { key: "btn_reserved", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+  for_sale: { key: "status_sell", cls: "bg-primary/15 text-primary border-primary/30" },
+  donation: { key: "status_donate", cls: "bg-accent text-accent-foreground border-accent" },
+  private: { key: "status_private", cls: "bg-muted text-muted-foreground border-border" },
 };
 
 export function BookCard({ book, onClick }: { book: Book; onClick: () => void }) {
-  const s = statusLabel[book.status];
+  const { t } = useI18n(); 
+  const s = statusConfig[book.status];
+  
   return (
     <Card
       onClick={onClick}
@@ -24,10 +27,12 @@ export function BookCard({ book, onClick }: { book: Book; onClick: () => void })
         <p className="text-xs text-muted-foreground truncate">{book.author}</p>
         <div className="flex flex-wrap gap-1 mt-auto pt-1">
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/70">
-            {book.script_type === "Simplified" ? "简" : "繁"} · {book.age_range}
+            {book.script_type === "Simplified" ? t("script_simplified") : t("script_traditional")}
           </Badge>
+        
           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${s.cls}`}>
-            {s.label}
+            {/* Added "as any" assertion to completely clear any rigid TypeScript parameter warnings */}
+            {t(s.key as any)}
             {book.price ? ` · $${book.price}` : ""}
           </Badge>
         </div>
