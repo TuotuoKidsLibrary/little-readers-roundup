@@ -17,7 +17,8 @@ export function BookCover({ book, size = "md" }: { book: Book; size?: "sm" | "md
   }
   return (
     <div
-      className={`${dims} relative shrink-0 rounded-md shadow-md overflow-hidden flex items-center justify-center text-center px-2 font-serif font-bold text-white/95`}
+      /* 🛠️ Swapped font-serif to font-sans so fallback book titles render in clean sans-serif */
+      className={`${dims} relative shrink-0 rounded-md shadow-md overflow-hidden flex items-center justify-center text-center px-2 font-sans font-bold text-white/95`}
       style={{
         background: `linear-gradient(135deg, oklch(0.55 0.12 ${h}), oklch(0.38 0.09 ${(h + 30) % 360}))`,
       }}
