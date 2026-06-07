@@ -132,7 +132,7 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
         });
     }, 150);
 
-    return () => {
+ return () => {
       isMounted = false;
       clearTimeout(initTimeout);
       stopAndClear();
@@ -141,26 +141,35 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
 
   return (
     <div className="rounded-xl border border-border bg-black/90 p-2 flex flex-col gap-2">
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black">
+      {/* 1. Container geometry updated to aspect-video (wide horizontal layout) */}
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
         <div id={REGION_ID} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
+        
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-[70%] w-[70%] rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+          {/* 2. Re-scaled Viewfinder to tight green rectangle with shadow background mask */}
+          <div className="relative h-[30%] w-[85%] rounded border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
             <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
           </div>
         </div>
+        
         {flash && <div className="absolute inset-0 bg-white animate-in fade-in-0 fade-out-0" />}
+        
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-xs text-white">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4 text-center text-xs text-white">
             {error}
           </div>
         )}
       </div>
+
       <div className="flex items-center justify-between gap-2 px-1">
-        <span className="text-xs text-white/80">Align the barcode within the red line</span>
+        {/* 3. Text updated to match the new green grid frame */}
+        <span className="text-xs text-white/80">Center barcode inside the green grid area</span>
         <Button type="button" size="sm" variant="secondary" onClick={onClose} className="gap-1.5">
           <X className="size-3.5" /> Close camera
         </Button>
       </div>
+
+      {/* 4. The Autofocus Fallback Button preserved cleanly */}
       <button
         type="button"
         onClick={() => {
@@ -191,4 +200,5 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
       </button>
     </div>
   );
-}
+}   
+  
