@@ -19,7 +19,7 @@ const dict = {
   scan_isbn: { en: "Scan ISBN Barcode", zh: "扫描ISBN条形码" },
   log_in: { en: "Log In", zh: "登录" },
   log_out: { en: "Log Out", zh: "退出登录" },
-  status_lend: { en: "Lend", zh: "借阅" },
+  status_lend: { en: "Request to Borrow", zh: "申请借阅" },
   status_sell: { en: "Sell", zh: "出售" },
   status_donate: { en: "Donate", zh: "捐赠" },
   status_private: { en: "Private", zh: "私有" },
