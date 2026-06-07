@@ -10,13 +10,7 @@ import { toast } from "sonner";
 import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BookCover } from "./BookCover";
-
-// 🛠️ 1. Updated inline shipping fulfillment list to be dual-language
-const methods = [
-  { id: "meetup", label: "Personal Meetup / 面交", sub: "Coordinate location in-app / 协调面交地点", Icon: MapPin },
-  { id: "media-mail", label: "USPS Media Mail / 邮寄", sub: "Standard low-cost shipping / 低成本标准图书邮寄", Icon: Truck },
-  { id: "porch", label: "Porch Pickup / 自提", sub: "Safe contactless pickup / 无接触自提", Icon: Home },
-];
+import { useI18n } from "@/lib/i18n"; 
 
 export function BookDetailSheet({
   book,
@@ -28,6 +22,7 @@ export function BookDetailSheet({
   onOpenChange: (o: boolean) => void;
 }) {
   const { requestBook } = useStore();
+  const { t, lang } = useI18n(); 
   const [showForm, setShowForm] = useState(false);
   const [method, setMethod] = useState("meetup");
   const [note, setNote] = useState("");
@@ -37,12 +32,17 @@ export function BookDetailSheet({
   const isSale = book.status === "for_sale";
   const isDonation = book.status === "donation";
 
-  // 🛠️ 2. Translated dynamic button text variables to a clear inline split layout
   const cta = isSale 
-    ? "Buy Book / 购买绘本" 
+    ? t("status_sell") 
     : isDonation 
-      ? "Request from Library / 向图书馆申请" 
-      : "Request to Borrow / 申请借阅";
+      ? t("status_donate") 
+      : t("status_lend");
+
+  const methods = [
+    { id: "meetup", label: lang === "en" ? "Personal Meetup" : "面交", sub: lang === "en" ? "Coordinate location in-app" : "站内协调面交地点", Icon: MapPin },
+    { id: "media-mail", label: lang === "en" ? "USPS Media Mail" : "邮寄", sub: lang === "en" ? "Standard low-cost shipping" : "低成本标准图书邮寄", Icon: Truck },
+    { id: "porch", label: lang === "en" ? "Porch Pickup" : "自提", sub: lang === "en" ? "Safe contactless pickup" : "无接触自提", Icon: Home },
+  ];
 
   const reset = () => {
     setShowForm(false);
@@ -53,7 +53,7 @@ export function BookDetailSheet({
   const submit = () => {
     const m = methods.find((x) => x.id === method)!.label;
     requestBook(book, m, note);
-    toast.success("Exchange request submitted successfully! / 请求提交成功！", {
+    toast.success(lang === "en" ? "Exchange request submitted!" : "请求提交成功！", {
       description: `${book.title} · ${m}`,
     });
     reset();
@@ -69,11 +69,10 @@ export function BookDetailSheet({
       }}
     >
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card font-sans">
-        {/* 🛠️ 3. Main header layout translation and font cleanup */}
         <SheetHeader className="text-left">
-          <SheetTitle className="font-sans font-bold text-xl">Book Details / 绘本详情</SheetTitle>
+          <SheetTitle className="font-sans font-bold text-xl">{t("book_details_title")}</SheetTitle>
           <SheetDescription className="font-sans">
-            Review and arrange this exchange. / 查阅并安排此次分享。
+            {t("exchange_subtitle")}
           </SheetDescription>
         </SheetHeader>
 
@@ -81,21 +80,21 @@ export function BookDetailSheet({
           <div className="flex gap-4 items-center">
             <BookCover book={book} size="lg" />
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              {/* 🛠️ 4. Changed font-serif to font-sans for clean title presentation */}
               <h2 className="font-sans text-xl font-bold leading-tight break-words">{book.title}</h2>
               <p className="text-sm text-muted-foreground truncate">{book.author}</p>
               <p className="text-xs text-muted-foreground">ISBN {book.isbn}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <Badge variant="secondary">{book.script_type === "Simplified" ? "简体" : "繁体"}</Badge>
-                <Badge variant="secondary">Ages / 适读年龄: {book.age_range}</Badge>
+                <Badge variant="secondary">
+                  {book.script_type === "Simplified" ? t("script_simplified") : t("script_traditional")}
+                </Badge>
+                <Badge variant="secondary">{t("age_range")}: {book.age_range}</Badge>
                 {book.price ? <Badge className="bg-primary text-primary-foreground">${book.price}</Badge> : null}
               </div>
             </div>
           </div>
 
-          {/* 🛠️ 5. Translated "Shared by" summary status component block */}
           <div className="rounded-lg bg-muted/60 p-3 text-xs flex flex-col gap-0.5">
-            <span className="text-muted-foreground">Shared by / 分享者:</span>
+            <span className="text-muted-foreground">{t("shared_by")}</span>
             <span className="font-medium text-sm text-foreground">{book.owner_name}</span>
           </div>
 
@@ -107,18 +106,17 @@ export function BookDetailSheet({
                 onClick={() => setShowForm(true)}
                 disabled={book.status === "reserved"}
               >
-                {book.status === "reserved" ? "Currently Reserved / 已被预约" : cta}
+                {book.status === "reserved" ? t("btn_reserved") : cta}
               </Button>
-              {/* 🛠️ 6. Translated "Save for later" custom outline secondary layout line */}
               <Button variant="outline" size="lg" className="font-sans py-5 text-sm text-muted-foreground hover:text-foreground gap-1.5">
-                <Heart className="size-4 text-red-500/80" /> Save for Later / 加入阅读清单
+                <Heart className="size-4 text-red-500/80" /> {t("save_for_later")}
               </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-4 rounded-xl border border-border bg-background/60 p-4 font-sans">
               <div>
-                <h3 className="font-sans font-bold text-base">Fulfillment Details / 取书方式</h3>
-                <p className="text-xs text-muted-foreground">Choose how you'd like to receive this book. / 选择您方便的取书渠道。</p>
+                <h3 className="font-sans font-bold text-base">{t("fulfillment_title")}</h3>
+                <p className="text-xs text-muted-foreground">{t("fulfillment_desc")}</p>
               </div>
 
               <RadioGroup value={method} onValueChange={setMethod} className="flex flex-col gap-2">
@@ -140,17 +138,16 @@ export function BookDetailSheet({
                 ))}
               </RadioGroup>
 
-              {/* 🛠️ 7. Translated input text fields labels and fallback text descriptions */}
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="note" className="text-sm font-medium flex flex-col gap-0.5">
-                  <span>Message to Owner / 给书主的留言</span>
-                  <span className="text-xs text-muted-foreground font-normal">(Optional details, preferred times / 可选：方便的取书时间等)</span>
+                  <span>{t("message_to_owner")}</span>
+                  <span className="text-xs text-muted-foreground font-normal">{t("message_hint")}</span>
                 </Label>
                 <Textarea
                   id="note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Hey! Saturdays after 10am work best for me… / 您好！我周六上午10点之后方便自提…"
+                  placeholder={t("message_placeholder")}
                   rows={4}
                   className="bg-background"
                 />
@@ -158,10 +155,10 @@ export function BookDetailSheet({
 
               <div className="flex gap-2 pt-1">
                 <Button variant="outline" className="flex-1 py-5 text-xs" onClick={() => setShowForm(false)}>
-                  Back / 返回
+                  {t("btn_back")}
                 </Button>
                 <Button className="flex-1 py-5 text-xs" onClick={submit}>
-                  Submit Request / 确认提交
+                  {t("btn_submit")}
                 </Button>
               </div>
             </div>
