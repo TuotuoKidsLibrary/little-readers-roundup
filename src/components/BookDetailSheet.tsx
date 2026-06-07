@@ -11,10 +11,11 @@ import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BookCover } from "./BookCover";
 
+// 🛠️ 1. Updated inline shipping fulfillment list to be dual-language
 const methods = [
-  { id: "meetup", label: "Personal Meetup", sub: "Coordinate location in-app", Icon: MapPin },
-  { id: "media-mail", label: "USPS Media Mail", sub: "Standard low-cost book shipping", Icon: Truck },
-  { id: "porch", label: "Porch Pickup", sub: "Safe contactless pickup from owner's home", Icon: Home },
+  { id: "meetup", label: "Personal Meetup / 面交", sub: "Coordinate location in-app / 协调面交地点", Icon: MapPin },
+  { id: "media-mail", label: "USPS Media Mail / 邮寄", sub: "Standard low-cost shipping / 低成本标准图书邮寄", Icon: Truck },
+  { id: "porch", label: "Porch Pickup / 自提", sub: "Safe contactless pickup / 无接触自提", Icon: Home },
 ];
 
 export function BookDetailSheet({
@@ -35,7 +36,13 @@ export function BookDetailSheet({
 
   const isSale = book.status === "for_sale";
   const isDonation = book.status === "donation";
-  const cta = isSale ? "Buy Book" : isDonation ? "Request from Library" : "Request to Borrow";
+
+  // 🛠️ 2. Translated dynamic button text variables to a clear inline split layout
+  const cta = isSale 
+    ? "Buy Book / 购买绘本" 
+    : isDonation 
+      ? "Request from Library / 向图书馆申请" 
+      : "Request to Borrow / 申请借阅";
 
   const reset = () => {
     setShowForm(false);
@@ -46,7 +53,7 @@ export function BookDetailSheet({
   const submit = () => {
     const m = methods.find((x) => x.id === method)!.label;
     requestBook(book, m, note);
-    toast.success("Exchange request submitted successfully!", {
+    toast.success("Exchange request submitted successfully! / 请求提交成功！", {
       description: `${book.title} · ${m}`,
     });
     reset();
@@ -61,50 +68,57 @@ export function BookDetailSheet({
         onOpenChange(o);
       }}
     >
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card">
-        <SheetHeader>
-          <SheetTitle className="font-serif">Book details</SheetTitle>
-          <SheetDescription>Review and arrange this exchange.</SheetDescription>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto bg-card font-sans">
+        {/* 🛠️ 3. Main header layout translation and font cleanup */}
+        <SheetHeader className="text-left">
+          <SheetTitle className="font-sans font-bold text-xl">Book Details / 绘本详情</SheetTitle>
+          <SheetDescription className="font-sans">
+            Review and arrange this exchange. / 查阅并安排此次分享。
+          </SheetDescription>
         </SheetHeader>
 
-        <div className="px-4 pb-6 flex flex-col gap-5">
+        <div className="px-4 pb-6 flex flex-col gap-5 mt-6">
           <div className="flex gap-4 items-center">
             <BookCover book={book} size="lg" />
-            <div className="flex flex-col gap-1.5">
-              <h2 className="font-serif text-2xl font-bold leading-tight">{book.title}</h2>
-              <p className="text-sm text-muted-foreground">{book.author}</p>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+              {/* 🛠️ 4. Changed font-serif to font-sans for clean title presentation */}
+              <h2 className="font-sans text-xl font-bold leading-tight break-words">{book.title}</h2>
+              <p className="text-sm text-muted-foreground truncate">{book.author}</p>
               <p className="text-xs text-muted-foreground">ISBN {book.isbn}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <Badge variant="secondary">{book.script_type}</Badge>
-                <Badge variant="secondary">Ages {book.age_range}</Badge>
-                {book.price ? <Badge>${book.price}</Badge> : null}
+                <Badge variant="secondary">{book.script_type === "Simplified" ? "简体" : "繁体"}</Badge>
+                <Badge variant="secondary">Ages / 适读年龄: {book.age_range}</Badge>
+                {book.price ? <Badge className="bg-primary text-primary-foreground">${book.price}</Badge> : null}
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-muted/60 p-3 text-sm">
-            <span className="text-muted-foreground">Shared by </span>
-            <span className="font-medium">{book.owner_name}</span>
+          {/* 🛠️ 5. Translated "Shared by" summary status component block */}
+          <div className="rounded-lg bg-muted/60 p-3 text-xs flex flex-col gap-0.5">
+            <span className="text-muted-foreground">Shared by / 分享者:</span>
+            <span className="font-medium text-sm text-foreground">{book.owner_name}</span>
           </div>
 
           {!showForm ? (
             <div className="flex flex-col gap-2">
               <Button
                 size="lg"
+                className="font-sans py-5 text-sm"
                 onClick={() => setShowForm(true)}
                 disabled={book.status === "reserved"}
               >
-                {book.status === "reserved" ? "Currently Reserved" : cta}
+                {book.status === "reserved" ? "Currently Reserved / 已被预约" : cta}
               </Button>
-              <Button variant="outline" size="lg">
-                <Heart className="size-4" /> Save for later
+              {/* 🛠️ 6. Translated "Save for later" custom outline secondary layout line */}
+              <Button variant="outline" size="lg" className="font-sans py-5 text-sm text-muted-foreground hover:text-foreground gap-1.5">
+                <Heart className="size-4 text-red-500/80" /> Save for Later / 加入阅读清单
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 rounded-xl border border-border bg-background/60 p-4">
+            <div className="flex flex-col gap-4 rounded-xl border border-border bg-background/60 p-4 font-sans">
               <div>
-                <h3 className="font-serif font-bold text-lg">Fulfillment Details</h3>
-                <p className="text-xs text-muted-foreground">Choose how you'd like to receive this book.</p>
+                <h3 className="font-sans font-bold text-base">Fulfillment Details / 取书方式</h3>
+                <p className="text-xs text-muted-foreground">Choose how you'd like to receive this book. / 选择您方便的取书渠道。</p>
               </div>
 
               <RadioGroup value={method} onValueChange={setMethod} className="flex flex-col gap-2">
@@ -120,31 +134,34 @@ export function BookDetailSheet({
                     <Icon className="size-5 text-primary mt-0.5 shrink-0" />
                     <div className="flex flex-col">
                       <span className="font-medium text-sm">{label}</span>
-                      <span className="text-xs text-muted-foreground">{sub}</span>
+                      <span className="text-xs text-muted-foreground leading-normal mt-0.5">{sub}</span>
                     </div>
                   </Label>
                 ))}
               </RadioGroup>
 
+              {/* 🛠️ 7. Translated input text fields labels and fallback text descriptions */}
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="note" className="text-sm">
-                  Message to Owner <span className="text-muted-foreground font-normal">(Optional details, preferred times, etc.)</span>
+                <Label htmlFor="note" className="text-sm font-medium flex flex-col gap-0.5">
+                  <span>Message to Owner / 给书主的留言</span>
+                  <span className="text-xs text-muted-foreground font-normal">(Optional details, preferred times / 可选：方便的取书时间等)</span>
                 </Label>
                 <Textarea
                   id="note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Hey! Saturdays after 10am work best for me…"
+                  placeholder="Hey! Saturdays after 10am work best for me… / 您好！我周六上午10点之后方便自提…"
                   rows={4}
+                  className="bg-background"
                 />
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setShowForm(false)}>
-                  Back
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1 py-5 text-xs" onClick={() => setShowForm(false)}>
+                  Back / 返回
                 </Button>
-                <Button className="flex-1" onClick={submit}>
-                  Submit Request
+                <Button className="flex-1 py-5 text-xs" onClick={submit}>
+                  Submit Request / 确认提交
                 </Button>
               </div>
             </div>
