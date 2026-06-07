@@ -81,14 +81,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Tuotuo Kids Library 妥妥绘本馆" },
+      { name: "description", content: "Story Share Hub is a mobile-responsive web platform for a children's book exchange club." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Tuotuo Kids Library 妥妥绘本馆" },
+      { property: "og:description", content: "Story Share Hub is a mobile-responsive web platform for a children's book exchange club." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Tuotuo Kids Library 妥妥绘本馆" },
+      { name: "twitter:description", content: "Story Share Hub is a mobile-responsive web platform for a children's book exchange club." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/05fe8194-ed02-474e-9031-72e6a0cf6729/id-preview-3c1cc690--d8259c58-5bf7-4982-9f35-20f24d53f3a9.lovable.app-1780796361540.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/05fe8194-ed02-474e-9031-72e6a0cf6729/id-preview-3c1cc690--d8259c58-5bf7-4982-9f35-20f24d53f3a9.lovable.app-1780796361540.png" },
     ],
     links: [
       {
