@@ -141,14 +141,14 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
 
   return (
     <div className="rounded-xl border border-border bg-black/90 p-2 flex flex-col gap-2">
-      {/* 1. Container geometry updated to aspect-video (wide horizontal layout) */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+      {/* 1. Changed aspect-video to aspect-[3/4] so the camera view is a tall, comfortable window */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-black">
         <div id={REGION_ID} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
         
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {/* 2. Re-scaled Viewfinder to tight green rectangle with shadow background mask */}
-          <div className="relative h-[30%] w-[85%] rounded border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
-            <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
+        {/* 2. Overlaid dark masking and a beautifully proportioned target frame */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+          <div className="relative h-[20%] w-full rounded-lg border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
+            <div className="absolute left-0 right-0 top-1/2 h-[1.5px] -translate-y-1/2 bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
           </div>
         </div>
         
@@ -161,15 +161,17 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-1">
-        {/* 3. Text updated to match the new green grid frame */}
-        <span className="text-xs text-white/80">Center barcode inside the green grid area</span>
-        <Button type="button" size="sm" variant="secondary" onClick={onClose} className="gap-1.5">
-          <X className="size-3.5" /> Close camera
+      {/* 3. Streamlined actions and added clean bilingual support */}
+      <div className="flex items-center justify-between gap-2 px-1 mt-1">
+        <span className="text-[11px] font-medium text-white/90 leading-tight">
+          Center barcode on red line<br />
+          <span className="text-white/60 font-normal">请将条形码对准红线</span>
+        </span>
+        <Button type="button" size="sm" variant="secondary" onClick={onClose} className="h-8 text-xs gap-1">
+          <X className="size-3.5" /> Close / 关闭
         </Button>
       </div>
 
-      {/* 4. The Autofocus Fallback Button preserved cleanly */}
       <button
         type="button"
         onClick={() => {
@@ -193,12 +195,12 @@ export function IsbnScanner({ onDetected, onClose, onManualFallback }: IsbnScann
             done();
           });
         }}
-        className="mt-1 flex items-center justify-center gap-1.5 rounded-md bg-white/90 hover:bg-white text-foreground text-xs font-medium py-2 transition-colors"
+        className="mt-1 flex items-center justify-center gap-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-2.5 transition-colors border border-white/10"
       >
         <Keyboard className="size-3.5" />
-        Camera having trouble autofocusing? Click here to type ISBN manually
+        Type ISBN Manually / 手动输入条形码
       </button>
     </div>
   );
-}   
+}
   
