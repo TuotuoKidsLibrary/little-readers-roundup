@@ -96,16 +96,20 @@ function Index() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
-      <section className="mb-6 flex flex-col gap-2">
+      {/* 🛠️ Fixed parent element alignment wrapper to enforce left alignment */}
+      <section className="mb-6 flex flex-col items-start gap-1.5 text-left">
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
-        <h1 className="font-serif text-[4.3vw] sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-center sm:text-left whitespace-nowrap w-full sm:w-auto">
+        
+        {/* 🛠️ Replaced font-serif with font-sans, removed text-center, forced text-left layout on all viewports */}
+        <h1 className="font-sans text-[4.3vw] sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-left whitespace-nowrap w-full">
           {lang === "en"
             ? "Grow Our Library | Raise Bilingual Children"
             : t("slogan")}
         </h1>
-        <p className="text-sm text-muted-foreground max-w-xl">
+        
+        <p className="text-sm text-muted-foreground max-w-xl text-left">
           {t("home_subtitle")}
         </p>
       </section>
