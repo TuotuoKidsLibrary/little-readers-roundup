@@ -20,9 +20,9 @@ import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Community Library — 小书阁 BookNest" },
+      { title: "Tuotuo Kids Library — 妥妥绘本馆" },
       { name: "description", content: "A neighborhood Chinese children's book exchange." },
-      { property: "og:title", content: "Community Library — 小书阁 BookNest" },
+      { property: "og:title", content: "Tuotuo Kids Library — 妥妥绘本馆" },
       { property: "og:description", content: "A neighborhood Chinese children's book exchange." },
     ],
     links: [
