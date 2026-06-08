@@ -41,7 +41,6 @@ function Index() {
   const filtered = useMemo(
     () =>
       books.filter((b) => {
-        // Private books are never shown in the public Community Library
         if (b.status === "private") return false;
         if (script !== "all" && b.script_type !== script) return false;
         if (age !== "all" && b.age_range !== age) return false;
@@ -59,35 +58,35 @@ function Index() {
   const filters = (
     <div className="flex flex-col gap-5">
       <FilterGroup
-        label="Script Type"
+        label={t("script_type")}
         value={script}
         options={[
-          { v: "all", l: "All" },
-          { v: "Simplified", l: "Simplified" },
-          { v: "Traditional", l: "Traditional" },
+          { v: "all", l: lang === "en" ? "All" : "全部" },
+          { v: "Simplified", l: t("script_simplified") },
+          { v: "Traditional", l: t("script_traditional") },
         ]}
         onChange={(v) => setScript(v as ScriptType | "all")}
       />
       <FilterGroup
-        label="Age Range"
+        label={t("age_range")}
         value={age}
         options={[
-          { v: "all", l: "All ages" },
-          { v: "0-2", l: "0–2" },
-          { v: "3-5", l: "3–5" },
-          { v: "6+", l: "6+" },
+          { v: "all", l: lang === "en" ? "All ages" : "全部年龄" },
+          { v: "0-2", l: lang === "en" ? "0–2" : "0-2 岁" },
+          { v: "3-5", l: lang === "en" ? "3–5" : "3-5 岁" },
+          { v: "6+", l: lang === "en" ? "6+" : "6 岁以上" },
         ]}
         onChange={(v) => setAge(v as AgeRange | "all")}
       />
       <FilterGroup
-        label="Book Status"
+        label={lang === "en" ? "Book Status" : "图书状态"}
         value={status}
         options={[
-          { v: "all", l: "All" },
-          { v: "available", l: "Available" },
-          { v: "for_sale", l: "For Sale" },
-          { v: "donation", l: "Donation" },
-          { v: "reserved", l: "Reserved" },
+          { v: "all", l: lang === "en" ? "All" : "全部" },
+          { v: "available", l: t("status_lend") },
+          { v: "for_sale", l: t("status_sell") },
+          { v: "donation", l: t("status_donate") },
+          { v: "reserved", l: t("btn_reserved") },
         ]}
         onChange={(v) => setStatus(v as BookStatus | "all")}
       />
@@ -96,16 +95,13 @@ function Index() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
-      
       <section className="mb-6 flex flex-col items-start gap-1.5 text-left">
         <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
           {t("nav_library")}
         </Badge>
         
         <h1 className="font-sans text-[4.3vw] sm:text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-left whitespace-nowrap w-full">
-          {lang === "en"
-            ? "Grow Our Library | Raise Bilingual Children"
-            : t("slogan")}
+          {lang === "en" ? "Grow Our Library | Raise Bilingual Children" : t("slogan")}
         </h1>
         
         <p className="text-sm text-muted-foreground max-w-xl text-left">
@@ -131,9 +127,9 @@ function Index() {
           </SheetTrigger>
           <SheetContent side="left" className="bg-card">
             <SheetHeader>
-              <SheetTitle className="font-serif">Filter books</SheetTitle>
+              <SheetTitle className="font-sans font-bold">{lang === "en" ? "Filter books" : "筛选图书"}</SheetTitle>
             </SheetHeader>
-            <div className="px-4 pb-6">{filters}</div>
+            <div className="px-4 pb-6 mt-4">{filters}</div>
           </SheetContent>
         </Sheet>
       </div>
@@ -141,14 +137,16 @@ function Index() {
       <div className="grid lg:grid-cols-[220px_1fr] gap-6">
         <aside className="hidden lg:block">
           <div className="sticky top-20 rounded-2xl border border-border/60 bg-card p-5">
-            <h2 className="font-serif font-bold text-base mb-4">Filters</h2>
+            <h2 className="font-sans font-bold text-base mb-4">{lang === "en" ? "Filters" : "筛选过滤"}</h2>
             {filters}
           </div>
         </aside>
 
         <div>
           <p className="text-xs text-muted-foreground mb-3">
-            Showing <span className="font-medium text-foreground">{filtered.length}</span> of {books.length} books
+            {lang === "en" ? "Showing " : "正在显示 "}
+            <span className="font-medium text-foreground">{filtered.length}</span>
+            {lang === "en" ? ` of ${books.length} books` : ` 册图书（总共 ${books.length} 册）`}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.map((b) => (
@@ -157,7 +155,7 @@ function Index() {
           </div>
           {filtered.length === 0 && (
             <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-              No books match these filters yet.
+              {lang === "en" ? "No books match these filters yet." : "暂无符合筛选条件的绘本。"}
             </div>
           )}
         </div>
