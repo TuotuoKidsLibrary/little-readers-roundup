@@ -19,7 +19,7 @@ const dict = {
   scan_isbn: { en: "Scan ISBN Barcode", zh: "扫描ISBN条形码" },
   log_in: { en: "Log In", zh: "登录" },
   log_out: { en: "Log Out", zh: "退出登录" },
-  status_lend: { en: "Request to Borrow", zh: "申请借阅" },
+  status_lend: { en: "Available", zh: "借阅" },
   status_sell: { en: "Sell", zh: "出售" },
   status_donate: { en: "Donate", zh: "捐赠" },
   status_private: { en: "Private", zh: "私有" },
@@ -133,7 +133,7 @@ const dict = {
     en: "Keep track of your personal collection privately—you can easily toggle this to public when your kids outgrow it!",
     zh: "私密保存您的个人藏书 — 等孩子长大后可一键切换为公开分享！",
   },
-  script_type: { en: "Script Type", zh: "中文字体" },
+  script_type: { en: "Script Type", zh: "字体" },
   select_script_type: { en: "Select Script Type", zh: "选择字体" },
   script_simplified: { en: "Simplified Chinese", zh: "简体" },
   script_traditional: { en: "Traditional Chinese", zh: "繁体" },
@@ -162,7 +162,7 @@ const dict = {
   message_placeholder: { en: "Hey! Saturdays after 10am work best for me…", zh: "您好！我周六上午10点之后方便自提…" },
   btn_back: { en: "Back", zh: "返回" },
   btn_submit: { en: "Submit Request", zh: "确认提交" },
-  btn_reserved: { en: "Currently Reserved", zh: "已被预约" },
+  btn_reserved: { en: "Currently Reserved", zh: "已预约" },
 } as const;
 
 export type TKey = keyof typeof dict;
