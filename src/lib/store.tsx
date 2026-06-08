@@ -27,7 +27,7 @@ function loadGuestSavedBooks(): string[] {
 const seedBooks: Book[] = [
   { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
   { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787539732220", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
-  { id: "b3", title: "好餓的毛毛虫", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
+  { id: "b3", title: "好餓的毛毛蟲", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
   { id: "b4", title: "三毛流浪记", author: "张乐平", isbn: "9787532497034", script_type: "Simplified", age_range: "6+", status: "donation", owner_id: "platform_admin", owner_name: "Library Collection", cover_hue: 8 },
   { id: "b5", title: "我爸爸", author: "安东尼·布朗", isbn: "9787543463530", script_type: "Simplified", age_range: "3-5", status: "available", owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 28 },
 ];
@@ -203,7 +203,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const coverHue = b.cover_hue ?? Math.floor(Math.random() * 360);
 
-    // Save directly to Supabase using exact lowercase field types
     const { error } = await supabase.from("books").insert([
       {
         title: b.title,
@@ -221,7 +220,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error("Database book insertion error:", error);
     } else {
-      // Clean, instant state refresh: pull the newly updated catalog from the cloud
       const { data } = await supabase
         .from("books")
         .select("*")
@@ -257,4 +255,67 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
-    const cleanIsbn =
+    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
+    if (!cleanIsbn) return null;
+
+    try {
+      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+      const olRes = await fetch(olUrl);
+      if (olRes.ok) {
+        const olData = await olRes.json();
+        const bookKey = `ISBN:${cleanIsbn}`;
+        if (olData && olData[bookKey]) {
+          const bookInfo = olData[bookKey];
+          return {
+            title: bookInfo.title || "Unknown Book",
+            author: bookInfo.authors?.[0]?.name || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) { /* fallback sequential hook */ }
+
+    try {
+      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
+      const gbRes = await fetch(gbUrl);
+      if (gbRes.ok) {
+        const gbData = await gbRes.json();
+        if (gbData && gbData.items && gbData.items.length > 0) {
+          const volumeInfo = gbData.items[0].volumeInfo;
+          return {
+            title: volumeInfo.title || "Unknown Book",
+            author: volumeInfo.authors?.[0] || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) { console.error(e); }
+
+    return null;
+  };
+
+  const toggleSaveBook = (id: string) => {
+    setSavedBookIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const requestBook: StoreCtx["requestBook"] = (book, method, note) => {
+    setBookStatus(book.id, "reserved");
+  };
+
+  const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
+  const updateProfile: StoreCtx["updateProfile"] = async (patch) => { /* logic wrapper stub */ };
+
+  return (
+    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export function useStore() {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("StoreProvider missing");
+  return v;
+}
+
+export { CURRENT_USER_ID };
