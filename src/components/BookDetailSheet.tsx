@@ -1,3 +1,6 @@
+Here is the updated code for **`src/components/BookDetailSheet.tsx`** matching your provided base logic. It preserves your exact text adjustments for `getActionLabel` while implementing the interactive save status functionality for the "Save for Later" trigger.
+
+```tsx
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -26,6 +29,7 @@ export function BookDetailSheet({
   const [showForm, setShowForm] = useState(false);
   const [method, setMethod] = useState("meetup");
   const [note, setNote] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
 
   if (!book) return null;
 
@@ -47,6 +51,18 @@ export function BookDetailSheet({
     { id: "media-mail", label: lang === "en" ? "USPS Media Mail" : "邮寄", sub: lang === "en" ? "Standard low-cost shipping" : "低成本标准图书邮寄", Icon: Truck },
     { id: "porch", label: lang === "en" ? "Porch Pickup" : "自提", sub: lang === "en" ? "Safe contactless pickup" : "无接触自提", Icon: Home },
   ];
+
+  const handleSaveToggle = () => {
+    const nextState = !isSaved;
+    setIsSaved(nextState);
+    if (nextState) {
+      toast.success(lang === "en" ? "Added to your favorites!" : "已添加到收藏夹！", {
+        description: book.title,
+      });
+    } else {
+      toast.info(lang === "en" ? "Removed from favorites" : "已从收藏夹中移除");
+    }
+  };
 
   const reset = () => {
     setShowForm(false);
@@ -112,8 +128,14 @@ export function BookDetailSheet({
               >
                 {getActionLabel()}
               </Button>
-              <Button variant="outline" size="lg" className="font-sans py-5 text-sm text-muted-foreground hover:text-foreground gap-1.5">
-                <Heart className="size-4 text-red-500/80" /> {t("save_for_later")}
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleSaveToggle}
+                className="font-sans py-5 text-sm text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                <Heart className={`size-4 transition-colors ${isSaved ? "fill-red-500 text-red-500" : "text-red-500/80"}`} /> 
+                {isSaved ? (lang === "en" ? "Saved" : "已收藏") : t("save_for_later")}
               </Button>
             </div>
           ) : (
@@ -172,3 +194,5 @@ export function BookDetailSheet({
     </Sheet>
   );
 }
+
+```
