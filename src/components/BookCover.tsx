@@ -17,11 +17,13 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
 
   const cleanIsbn = book.isbn ? book.isbn.replace(/[- ]/g, "").trim() : null;
 
+  // 🌟 Open Library's image engine is completely free and never blocks PWA wrappers.
+  // Adding '?default=false' forces it to fail instantly if the cover doesn't exist,
+  // which safely triggers your beautiful colorful fallback boxes!
   const realCoverUrl = cleanIsbn 
-    ? `https://books.google.com/books/content?id=&vid=ISBN:${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
+    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg?default=false`
     : null;
 
-  // Reset error state if the book record changes
   useEffect(() => {
     setImgError(false);
   }, [book.isbn]);
@@ -34,15 +36,13 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
           alt={book.title}
           className="w-full h-full object-cover object-center"
           loading="lazy"
-          referrerPolicy="no-referrer"
           onError={() => setImgError(true)}
         />
       </div>
     );
   }
 
-
- const hue = book.cover_hue ?? 25;
+  const hue = book.cover_hue ?? 25;
   return (
     <div
       style={{
