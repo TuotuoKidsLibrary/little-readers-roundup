@@ -9,33 +9,34 @@ interface BookCoverProps {
 export function BookCover({ book, size = "md" }: BookCoverProps) {
   const [imgError, setImgError] = useState(false);
 
-  // Define sizing classes for the responsive canvas frames
   const sizeClasses = {
     sm: "w-10 h-14 text-[9px]",
     md: "w-16 h-22 text-[11px] shrink-0 shadow-sm",
     lg: "w-28 h-40 text-sm shrink-0 shadow-md",
   };
 
-  // Google Books static frontcover image constructor stream
-  const realCoverUrl = book.isbn 
-    ? `https://books.google.com/books/content?id=&vid=ISBN:${book.isbn.replace(/[- ]/g, "")}&printsec=frontcover&img=1&zoom=1`
+  const cleanIsbn = book.isbn ? book.isbn.replace(/[- ]/g, "").trim() : null;
+
+  // Open Library has a highly reliable, completely un-throttled public image hosting system
+  const realCoverUrl = cleanIsbn 
+    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg?default=false`
     : null;
 
-  // Render the real cover if available and hasn't errored out
   if (realCoverUrl && !imgError) {
     return (
       <div className={`${sizeClasses[size]} relative rounded-md overflow-hidden bg-muted border border-border/40`}>
         <img
           src={realCoverUrl}
           alt={book.title}
-          className="w-full h-full object-cover object-center transition-opacity duration-300"
+          className="w-full h-full object-cover object-center"
           loading="lazy"
-          onError={() => setImgError(true)} // Falls back to beautiful custom placeholder if API has no image
+          onError={() => setImgError(true)} // Instantly activates the styled placeholder frame if image isn't found
         />
       </div>
     );
   }
 
+  // 🌟 FALLBACK: Your original colorful stylized placeholder canvas blocks
   const hue = book.cover_hue ?? 25;
   return (
     <div
