@@ -13,6 +13,7 @@ const CURRENT_USER_ID = "current_user";
 const GUEST_OWNER_ID = "guest_user";
 const GUEST_BOOKS_KEY = "guest_books_v1";
 const GUEST_PROFILE_KEY = "guest_profile_v1";
+const GUEST_SAVED_KEY = "guest_saved_books_v1";
 
 function loadGuestBooks(): Book[] {
   if (typeof window === "undefined") return [];
@@ -31,6 +32,16 @@ function loadGuestProfile(): { neighborhood_location: string; zip_code: string }
     return raw ? JSON.parse(raw) : { neighborhood_location: "", zip_code: "" };
   } catch {
     return { neighborhood_location: "", zip_code: "" };
+  }
+}
+
+function loadGuestSavedBooks(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(GUEST_SAVED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -94,6 +105,7 @@ export interface SignupInput {
 interface StoreCtx {
   user: UserProfile;
   books: Book[];
+  savedBookIds: string[];
   threads: Thread[];
   messages: Message[];
   activity: ActivityRecord[];
@@ -106,6 +118,8 @@ interface StoreCtx {
   requestBook: (book: Book, method: string, note: string) => void;
   sendMessage: (thread_id: string, text: string) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
+  toggleSaveBook: (id: string) => void;
+  fetchBookMetadata: (isbn: string) => Promise<{ title: string; author: string } | null>;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -115,6 +129,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const guestBooks = loadGuestBooks();
     return [...guestBooks, ...seedBooks];
   });
+  const [savedBookIds, setSavedBookIds] = useState<string[]>(() => loadGuestSavedBooks());
   const [threads, setThreads] = useState<Thread[]>(seedThreads);
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [activity, setActivity] = useState<ActivityRecord[]>(seedActivity);
@@ -124,7 +139,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Persist guest books to localStorage whenever they change (guests only)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isAuthenticated) return;
@@ -136,7 +150,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [books, isAuthenticated]);
 
-  // Persist guest profile (neighborhood + zip) for visitors
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(GUEST_SAVED_KEY, JSON.stringify(savedBookIds));
+    } catch {
+      /* ignore */
+    }
+  }, [savedBookIds]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isAuthenticated) return;
@@ -152,6 +174,56 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
   }, [user.neighborhood_location, user.zip_code, isAuthenticated]);
+
+  const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
+    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
+    if (!cleanIsbn) return null;
+
+    try {
+      // 1. Try Open Library First
+      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+      const olRes = await fetch(olUrl);
+      if (olRes.ok) {
+        const olData = await olRes.json();
+        const bookKey = `ISBN:${cleanIsbn}`;
+        if (olData && olData[bookKey]) {
+          const bookInfo = olData[bookKey];
+          return {
+            title: bookInfo.title || "Unknown Book",
+            author: bookInfo.authors?.[0]?.name || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("Open Library failed or timed out, trying fallback...", e);
+    }
+
+    try {
+      // 2. Fallback to Google Books API (Comprehensive for Chinese/Bilingual context)
+      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
+      const gbRes = await fetch(gbUrl);
+      if (gbRes.ok) {
+        const gbData = await gbRes.json();
+        if (gbData && gbData.items && gbData.items.length > 0) {
+          const volumeInfo = gbData.items[0].volumeInfo;
+          return {
+            title: volumeInfo.title || "Unknown Book",
+            author: volumeInfo.authors?.[0] || volumeInfo.authors?.join(", ") || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Google Books fallback failed:", e);
+    }
+
+    return null;
+  };
+
+  const toggleSaveBook = (id: string) => {
+    setSavedBookIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const addBook: StoreCtx["addBook"] = (b) => {
     const isDonation = b.status === "donation";
@@ -252,10 +324,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const logout: StoreCtx["logout"] = () => {
     setUser(guestUser);
     setIsAuthenticated(false);
+    setSavedBookIds([]);
   };
 
   return (
-    <Ctx.Provider value={{ user, books, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile }}>
+    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
       {children}
     </Ctx.Provider>
   );
