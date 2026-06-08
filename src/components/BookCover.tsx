@@ -37,7 +37,7 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
   }
 
   // 🌟 FALLBACK: Your original colorful stylized placeholder canvas blocks
-  const hue = book.cover_hue ?? 25;
+ const hue = book.cover_hue ?? 25;
   return (
     <div
       style={{
@@ -45,10 +45,10 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
         color: `hsl(${hue}, 40%, 92%)`,
         borderColor: `hsl(${hue}, 25%, 32%)`,
       }}
-      className={`${sizeClasses[size]} rounded-md border flex flex-col justify-between p-1.5 text-center font-serif font-bold leading-tight select-none break-all overflow-hidden`}
+      className={`${sizeClasses[size]} rounded-md border flex flex-col justify-between p-2 text-center font-serif font-bold leading-tight select-none break-all overflow-hidden`}
     >
       <span className="block w-full line-clamp-3">{book.title}</span>
-      <span className="block w-full text-[0.65em] font-sans font-normal opacity-70 truncate">
+      <span className="block w-full text-[0.65em] font-sans font-normal opacity-70 truncate pb-0.5">
         {book.author}
       </span>
     </div>
