@@ -47,10 +47,10 @@ function loadGuestSavedBooks(): string[] {
 
 const seedBooks: Book[] = [
   { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
-  { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787539732220", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
-  { id: "b3", title: "好餓的毛毛蟲", author: "艾瑞·卡爾", isbn: "9789573208709", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
+  { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787532463459", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
+  { id: "b3", title: "好餓的毛毛蟲", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
   { id: "b4", title: "三毛流浪记", author: "张乐平", isbn: "9787532497034", script_type: "Simplified", age_range: "6+", status: "donation", owner_id: "platform_admin", owner_name: "Library Collection", cover_hue: 8 },
-  { id: "b5", title: "我爸爸", author: "安东尼·布朗", isbn: "9787543463530", script_type: "Simplified", age_range: "3-5", status: "available", owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 28 },
+  { id: "b5", title: "我爸爸", author: "安东尼·布朗", isbn: "9787543464582", script_type: "Simplified", age_range: "3-5", status: "available", owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 28 },
   { id: "b6", title: "彩虹色的花", author: "麦克·格雷涅茨", isbn: "9787539733814", script_type: "Simplified", age_range: "3-5", status: "reserved", owner_id: "u_ling", owner_name: "Ling H.", cover_hue: 320 },
   { id: "b7", title: "團圓", author: "余麗瓊", isbn: "9789862113325", script_type: "Traditional", age_range: "3-5", status: "for_sale", price: 8, owner_id: "u_chen", owner_name: "Chen Y.", cover_hue: 12 },
   { id: "b8", title: "西游记 (儿童版)", author: "吴承恩", isbn: "9787020127962", script_type: "Simplified", age_range: "6+", status: "donation", owner_id: "platform_admin", owner_name: "Library Collection", cover_hue: 48 },
