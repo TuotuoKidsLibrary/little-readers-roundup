@@ -27,7 +27,7 @@ function loadGuestSavedBooks(): string[] {
 const seedBooks: Book[] = [
   { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
   { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787539732220", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
-  { id: "b3", title: "好餓的毛毛蟲", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
+  { id: "b3", title: "好餓的毛毛虫", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
   { id: "b4", title: "三毛流浪记", author: "张乐平", isbn: "9787532497034", script_type: "Simplified", age_range: "6+", status: "donation", owner_id: "platform_admin", owner_name: "Library Collection", cover_hue: 8 },
   { id: "b5", title: "我爸爸", author: "安东尼·布朗", isbn: "9787543463530", script_type: "Simplified", age_range: "3-5", status: "available", owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 28 },
 ];
@@ -203,16 +203,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const coverHue = b.cover_hue ?? Math.floor(Math.random() * 360);
 
+    // Save directly to Supabase using exact lowercase field types
     const { error } = await supabase.from("books").insert([
       {
         title: b.title,
         author: b.author,
-        isbn: b.isbn,
+        isbn: b.isbn ? b.isbn.replace(/[- ]/g, "").trim() : null,
         script_type: b.script_type,
         age_range: b.age_range,
         status: b.status,
         owner_id: session.user.id,
-        owner_name: user.name,
+        owner_name: user.name || "Community Member",
         cover_hue: coverHue,
       },
     ]);
@@ -220,8 +221,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error("Database book insertion error:", error);
     } else {
-      // Force refreshing the state array values
-      setIsAuthenticated(!isAuthenticated);
+      // Clean, instant state refresh: pull the newly updated catalog from the cloud
+      const { data } = await supabase
+        .from("books")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (data) {
+        const dbBooks: Book[] = data.map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          author: row.author,
+          isbn: row.isbn,
+          script_type: row.script_type,
+          age_range: row.age_range,
+          status: row.status,
+          owner_id: row.owner_id,
+          owner_name: row.owner_name || "Community Member",
+          cover_hue: row.cover_hue,
+        }));
+        setBooks([...dbBooks, ...seedBooks]);
+      }
     }
   };
 
@@ -237,68 +257,4 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
-    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
-    if (!cleanIsbn) return null;
-
-    try {
-      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
-      const olRes = await fetch(olUrl);
-      if (olRes.ok) {
-        const olData = await olRes.json();
-        const bookKey = `ISBN:${cleanIsbn}`;
-        if (olData && olData[bookKey]) {
-          const bookInfo = olData[bookKey];
-          return {
-            title: bookInfo.title || "Unknown Book",
-            author: bookInfo.authors?.[0]?.name || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { /* fallback sequential hook */ }
-
-    try {
-      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
-      const gbRes = await fetch(gbUrl);
-      if (gbRes.ok) {
-        const gbData = await gbRes.json();
-        if (gbData && gbData.items && gbData.items.length > 0) {
-          const volumeInfo = gbData.items[0].volumeInfo;
-          return {
-            title: volumeInfo.title || "Unknown Book",
-            author: volumeInfo.authors?.[0] || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { console.error(e); }
-
-    return null;
-  };
-
-  const toggleSaveBook = (id: string) => {
-    setSavedBookIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  const requestBook: StoreCtx["requestBook"] = (book, method, note) => {
-    setBookStatus(book.id, "reserved");
-    // Interface handlers for messaging simulation loops
-  };
-
-  const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
-  const updateProfile: StoreCtx["updateProfile"] = async (patch) => { /* logic wrapper stub */ };
-
-  return (
-    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
-      {children}
-    </Ctx.Provider>
-  );
-}
-
-export function useStore() {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("StoreProvider missing");
-  return v;
-}
-
-export { CURRENT_USER_ID };
+    const cleanIsbn =
