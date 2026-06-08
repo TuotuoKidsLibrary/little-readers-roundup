@@ -25,6 +25,20 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Community Library — 小书阁 BookNest" },
       { property: "og:description", content: "A neighborhood Chinese children's book exchange." },
     ],
+    links: [
+      { rel: "manifest", href: "/manifest.json" },
+    ],
+    scripts: [
+      {
+        children: `
+          if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+              navigator.serviceWorker.register("/sw.js").catch((err) => console.error("PWA Error:", err));
+            });
+          }
+        `,
+      },
+    ],
   }),
   component: Index,
 });
@@ -83,9 +97,8 @@ function Index() {
         value={status}
         options={[
           { v: "all", l: lang === "en" ? "All" : "全部" },
-          { v: "available", l: lang === "en" ? "Available to Borrow" : "可借阅" },
+          { v: "available", l: lang === "en" ? "Available" : "可借阅" },
           { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
-          { v: "reserved", l: lang === "en" ? "Reserved" : "已被预约" },
         ]}
         onChange={(v) => setStatus(v as BookStatus | "all")}
       />
