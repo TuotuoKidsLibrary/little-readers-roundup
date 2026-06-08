@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Book } from "@/lib/types";
 
 interface BookCoverProps {
@@ -17,10 +17,14 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
 
   const cleanIsbn = book.isbn ? book.isbn.replace(/[- ]/g, "").trim() : null;
 
-  // Open Library has a highly reliable, completely un-throttled public image hosting system
   const realCoverUrl = cleanIsbn 
-    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg?default=false`
+    ? `https://books.google.com/books/content?id=&vid=ISBN:${cleanIsbn}&printsec=frontcover&img=1&zoom=1`
     : null;
+
+  // Reset error state if the book record changes
+  useEffect(() => {
+    setImgError(false);
+  }, [book.isbn]);
 
   if (realCoverUrl && !imgError) {
     return (
@@ -30,13 +34,14 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
           alt={book.title}
           className="w-full h-full object-cover object-center"
           loading="lazy"
-          onError={() => setImgError(true)} // Instantly activates the styled placeholder frame if image isn't found
+          referrerPolicy="no-referrer"
+          onError={() => setImgError(true)}
         />
       </div>
     );
   }
 
-  // 🌟 FALLBACK: Your original colorful stylized placeholder canvas blocks
+
  const hue = book.cover_hue ?? 25;
   return (
     <div
