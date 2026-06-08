@@ -45,7 +45,7 @@ const guestUser: UserProfile = {
 export interface SignupInput {
   name: string;
   email: string;
-  password: b string;
+  password: string;
   neighborhood: string;
   zip: string;
 }
@@ -58,7 +58,7 @@ interface StoreCtx {
   messages: Message[];
   activity: ActivityRecord[];
   isAuthenticated: boolean;
-  login: (email: string, password: b string) => Promise<{ error: string | null }>;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
   signup: (input: SignupInput) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { cover_hue?: number }) => Promise<void>;
