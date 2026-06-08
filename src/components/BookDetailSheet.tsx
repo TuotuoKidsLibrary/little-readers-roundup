@@ -29,17 +29,21 @@ export function BookDetailSheet({
 
   if (!book) return null;
 
-  const isSale = book.status === "for_sale";
-  const isDonation = book.status === "donation";
-
-  const cta = isSale 
-    ? t("status_sell") 
-    : isDonation 
-      ? t("status_donate") 
-      : t("status_lend");
+  const getActionLabel = () => {
+    if (book.status === "reserved") {
+      return lang === "en" ? "Reserved" : "已被预约";
+    }
+    if (book.status === "for_sale") {
+      return lang === "en" ? "Buy" : "购买";
+    }
+    if (book.status === "donation") {
+      return lang === "en" ? "Request to Borrow" : "申请借阅";
+    }
+    return lang === "en" ? "Request to Borrow" : "申请借阅";
+  };
 
   const methods = [
-    { id: "meetup", label: lang === "en" ? "Personal Meetup" : "面交", sub: lang === "en" ? "Coordinate location in-app" : "站内协调面交地点", Icon: MapPin },
+    { id: "meetup", label: lang === "en" ? "Personal Meetup" : "面交", sub: lang === "en" ? "Coordinate location in-app" : "沟通协调面交地点", Icon: MapPin },
     { id: "media-mail", label: lang === "en" ? "USPS Media Mail" : "邮寄", sub: lang === "en" ? "Standard low-cost shipping" : "低成本标准图书邮寄", Icon: Truck },
     { id: "porch", label: lang === "en" ? "Porch Pickup" : "自提", sub: lang === "en" ? "Safe contactless pickup" : "无接触自提", Icon: Home },
   ];
@@ -102,11 +106,11 @@ export function BookDetailSheet({
             <div className="flex flex-col gap-2">
               <Button
                 size="lg"
-                className="font-sans py-5 text-sm"
+                className="font-sans py-5 text-sm font-semibold tracking-wide"
                 onClick={() => setShowForm(true)}
                 disabled={book.status === "reserved"}
               >
-                {book.status === "reserved" ? t("btn_reserved") : cta}
+                {getActionLabel()}
               </Button>
               <Button variant="outline" size="lg" className="font-sans py-5 text-sm text-muted-foreground hover:text-foreground gap-1.5">
                 <Heart className="size-4 text-red-500/80" /> {t("save_for_later")}
