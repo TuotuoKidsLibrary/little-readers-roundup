@@ -7,7 +7,8 @@ interface BookCoverProps {
 }
 
 export function BookCover({ book, size = "md" }: BookCoverProps) {
-  const [imgError, setImgError] = useState(false);
+  const [isValidImage, setIsValidImage] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const sizeClasses = {
     sm: "w-10 h-14 text-[9px]",
@@ -16,19 +17,47 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
   };
 
   const cleanIsbn = book.isbn ? book.isbn.replace(/[- ]/g, "").trim() : null;
-
-  // 🌟 Open Library's image engine is completely free and never blocks PWA wrappers.
-  // Adding '?default=false' forces it to fail instantly if the cover doesn't exist,
-  // which safely triggers your beautiful colorful fallback boxes!
+  
+  // Using Open Library's standard path
   const realCoverUrl = cleanIsbn 
-    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg?default=false`
+    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg`
     : null;
 
   useEffect(() => {
-    setImgError(false);
-  }, [book.isbn]);
+    if (!realCoverUrl) {
+      setIsValidImage(false);
+      setIsLoading(false);
+      return;
+    }
 
-  if (realCoverUrl && !imgError) {
+    setIsLoading(true);
+    const img = new Image();
+    img.src = realCoverUrl;
+
+    img.onload = () => {
+      // Open Library returns a tiny 1x1 blank pixel image if the cover doesn't exist.
+      // A valid book cover will always have a real width greater than 1 pixel!
+      if (img.width > 1) {
+        setIsValidImage(true);
+      } else {
+        setIsValidImage(false);
+      }
+      setIsLoading(false);
+    };
+
+    img.onerror = () => {
+      setIsValidImage(false);
+      setIsLoading(false);
+    };
+  }, [book.isbn, realCoverUrl]);
+
+  // While checking the server, render a neutral background box to prevent flickering
+  if (isLoading) {
+    return <div className={`${sizeClasses[size]} rounded-md bg-muted animate-pulse`} />;
+  }
+
+  // If a genuine image was validated, display it safely
+  if (realCoverUrl && isValidImage) {
     return (
       <div className={`${sizeClasses[size]} relative rounded-md overflow-hidden bg-muted border border-border/40`}>
         <img
@@ -36,12 +65,12 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
           alt={book.title}
           className="w-full h-full object-cover object-center"
           loading="lazy"
-          onError={() => setImgError(true)}
         />
       </div>
     );
   }
 
+  // Fallback: Render your beautiful custom color-coded text block
   const hue = book.cover_hue ?? 25;
   return (
     <div
