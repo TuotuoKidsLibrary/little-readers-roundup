@@ -1,6 +1,3 @@
-Here is the updated code for **`src/components/BookDetailSheet.tsx`** matching your provided base logic. It preserves your exact text adjustments for `getActionLabel` while implementing the interactive save status functionality for the "Save for Later" trigger.
-
-```tsx
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -194,5 +191,3 @@ export function BookDetailSheet({
     </Sheet>
   );
 }
-
-```
