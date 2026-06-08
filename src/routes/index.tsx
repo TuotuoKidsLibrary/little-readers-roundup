@@ -83,9 +83,8 @@ function Index() {
         value={status}
         options={[
           { v: "all", l: lang === "en" ? "All" : "全部" },
-          { v: "available", l: lang === "en" ? "Available" : "可借阅" },
+          { v: "available", l: lang === "en" ? "Available to Borrow" : "可借阅" },
           { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
-          { v: "donation", l: lang === "en" ? "Donated" : "爱心捐赠" },
           { v: "reserved", l: lang === "en" ? "Reserved" : "已被预约" },
         ]}
         onChange={(v) => setStatus(v as BookStatus | "all")}
