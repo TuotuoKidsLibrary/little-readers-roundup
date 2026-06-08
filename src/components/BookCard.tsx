@@ -1,42 +1,70 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Book } from "@/lib/types";
 import { BookCover } from "./BookCover";
-import { useI18n } from "@/lib/i18n"; 
+import { useI18n } from "@/lib/i18n";
 
-const statusConfig: Record<Book["status"], { key: "status_lend" | "status_sell" | "status_donate" | "status_private" | "btn_reserved"; cls: string }> = {
-  available: { key: "status_lend", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  reserved: { key: "btn_reserved", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  for_sale: { key: "status_sell", cls: "bg-primary/15 text-primary border-primary/30" },
-  donation: { key: "status_donate", cls: "bg-accent text-accent-foreground border-accent" },
-  private: { key: "status_private", cls: "bg-muted text-muted-foreground border-border" },
-};
+interface BookCardProps {
+  book: Book;
+  onClick?: () => void;
+}
 
-export function BookCard({ book, onClick }: { book: Book; onClick: () => void }) {
-  const { t } = useI18n(); 
-  const s = statusConfig[book.status];
-  
+export function BookCard({ book, onClick }: BookCardProps) {
+  const { t, lang } = useI18n();
+
+  const getStatusBadge = () => {
+    if (book.status === "reserved") {
+      return (
+        <Badge variant="outline" className="bg-zinc-100 text-zinc-700 border-zinc-200 text-[11px] font-normal px-2 py-0">
+          {lang === "en" ? "Reserved" : "已被预约"}
+        </Badge>
+      );
+    }
+    
+    if (book.status === "for_sale") {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-100 text-[11px] font-normal px-2 py-0">
+          {lang === "en" ? "For Sale" : "可出售"}{book.price ? ` · $${book.price}` : ""}
+        </Badge>
+      );
+    }
+    
+    if (book.status === "donation") {
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 text-[11px] font-normal px-2 py-0">
+          {lang === "en" ? "Donated" : "爱心捐赠"}
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[11px] font-normal px-2 py-0">
+        {lang === "en" ? "Available" : "可借阅"}
+      </Badge>
+    );
+  };
+
   return (
-    <Card
+    <div
       onClick={onClick}
-      className="group cursor-pointer p-4 flex gap-3 hover:shadow-lg transition-all hover:-translate-y-0.5 bg-card border-border/60"
+      className="flex gap-4 items-center p-4 rounded-2xl border border-border/50 bg-card hover:bg-muted/30 cursor-pointer transition-all active:scale-[0.99]"
     >
-      <BookCover book={book} size="sm" />
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <h3 className="font-sans font-bold text-base leading-snug truncate">{book.title}</h3>
-        <p className="text-xs text-muted-foreground truncate">{book.author}</p>
-        <div className="flex flex-wrap gap-1 mt-auto pt-1">
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border/70">
+      <BookCover book={book} size="md" />
+      
+      <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
+        <h3 className="font-sans font-bold text-base text-foreground leading-snug truncate">
+          {book.title}
+        </h3>
+        <p className="text-xs text-muted-foreground truncate">
+          {book.author}
+        </p>
+        
+        <div className="flex flex-wrap gap-1.5 pt-1.5">
+          <Badge variant="secondary" className="text-[11px] font-normal px-2 py-0 text-muted-foreground bg-muted/60">
             {book.script_type === "Simplified" ? t("script_simplified") : t("script_traditional")}
           </Badge>
-        
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${s.cls}`}>
-            {/* Added "as any" assertion to completely clear any rigid TypeScript parameter warnings */}
-            {t(s.key as any)}
-            {book.price ? ` · $${book.price}` : ""}
-          </Badge>
+          {getStatusBadge()}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
