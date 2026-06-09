@@ -248,6 +248,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateProfile: StoreCtx["updateProfile"] = async (patch) => {
+    if (user.id === "guest") return;
+
+    // 🌟 Map the patch update direct to your Supabase profiles columns
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        name: patch.name,
+        neighborhood_location: patch.neighborhood_location,
+        zip_code: patch.zip_code,
+      })
+      .eq("id", user.id);
+
+    if (!error) {
+      // Instantly update local screen state so changes reflect dynamically
+      setUser((prev) => ({ ...prev, ...patch }));
+    } else {
+      console.error("Error updating database profile info:", error);
+    }
+  };
+
   const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
     const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
     if (!cleanIsbn) return null;
@@ -297,7 +318,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
-  const updateProfile: StoreCtx["updateProfile"] = async (patch) => { /* logic wrapper stub */ };
 
   return (
     <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
