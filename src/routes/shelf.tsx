@@ -10,6 +10,7 @@ import { useStore, CURRENT_USER_ID } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
+import { LogBookDialog } from "@/components/LogBookDialog"; // 🌟 Import your dual-purpose editor
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
 import { Send, ArrowLeft, BookOpen, Activity, MessageSquare, History } from "lucide-react";
@@ -30,7 +31,11 @@ function ShelfPage() {
   const ownerId = isAuthenticated ? CURRENT_USER_ID : "guest_user";
   const mine = useMemo(() => books.filter((b) => b.owner_id === ownerId), [books, ownerId]);
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
+  
+  // States to manage book details selections vs editing modal operations
   const [selected, setSelected] = useState<Book | null>(null);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-6">
@@ -75,7 +80,15 @@ function ShelfPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {mine.map((b) => (
-                <BookCard key={b.id} book={b} onClick={() => setSelected(b)} />
+                <BookCard 
+                  key={b.id} 
+                  book={b} 
+                  onClick={() => {
+                    // 🌟 Intercept the click here to populate and pop open your editor instead!
+                    setEditingBook(b);
+                    setIsEditOpen(true);
+                  }} 
+                />
               ))}
             </div>
           )}
@@ -110,7 +123,16 @@ function ShelfPage() {
         </TabsContent>
       </Tabs>
 
+      {/* Public Read-Only Detail Dialog for basic interactions */}
       <BookDetailSheet book={selected} open={!!selected} onOpenChange={(o) => !o && setSelected(null)} />
+
+      {/* 🌟 Hidden Global Controller instance for editing contributed books */}
+      <LogBookDialog
+        bookToEdit={editingBook || undefined}
+        openOverride={isEditOpen}
+        setOpenOverride={setIsEditOpen}
+        onCloseEdit={() => setEditingBook(null)}
+      />
     </div>
   );
 }
@@ -162,7 +184,6 @@ function MessagesPanel() {
 
   return (
     <div className="grid md:grid-cols-[260px_1fr] gap-3 rounded-2xl border border-border/60 bg-card overflow-hidden min-h-[520px]">
-      {/* Thread list */}
       <aside
         className={`border-r border-border ${activeId ? "hidden md:block" : "block"}`}
       >
@@ -194,7 +215,6 @@ function MessagesPanel() {
         )}
       </aside>
 
-      {/* Chat */}
       <section className={`flex flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
         {activeThread ? (
           <>
