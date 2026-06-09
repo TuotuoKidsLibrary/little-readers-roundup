@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import type { Book } from "@/lib/types";
 import { BookCover } from "./BookCover";
 import { useI18n } from "@/lib/i18n";
+import { useStore } from "@/lib/store";
+import { Edit3 } from "lucide-react";
 
 interface BookCardProps {
   book: Book;
@@ -10,6 +12,10 @@ interface BookCardProps {
 
 export function BookCard({ book, onClick }: BookCardProps) {
   const { t, lang } = useI18n();
+  const { user, isAuthenticated } = useStore();
+
+  // Check if the currently logged-in parent is the one who contributed this specific book
+  const isMyContribution = isAuthenticated && book.owner_id === user.id;
 
   const getStatusBadge = () => {
     if (book.status === "reserved") {
@@ -46,14 +52,23 @@ export function BookCard({ book, onClick }: BookCardProps) {
   return (
     <div
       onClick={onClick}
-      className="flex gap-4 items-center p-4 rounded-2xl border border-border/50 bg-card hover:bg-muted/30 cursor-pointer transition-all active:scale-[0.99]"
+      className={`flex gap-4 items-center p-4 rounded-2xl border bg-card hover:bg-muted/30 cursor-pointer transition-all active:scale-[0.99] relative overflow-hidden ${
+        isMyContribution ? "border-primary/40 shadow-sm" : "border-border/50"
+      }`}
     >
       <BookCover book={book} size="md" />
       
       <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
-        <h3 className="font-sans font-bold text-base text-foreground leading-snug truncate">
-          {book.title}
-        </h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-sans font-bold text-base text-foreground leading-snug truncate flex-1">
+            {book.title}
+          </h3>
+          {isMyContribution && (
+            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-medium px-1.5 py-0 flex items-center gap-0.5 shrink-0">
+              <Edit3 className="size-2.5" /> {lang === "en" ? "Mine" : "我的"}
+            </Badge>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground truncate">
           {book.author}
         </p>
