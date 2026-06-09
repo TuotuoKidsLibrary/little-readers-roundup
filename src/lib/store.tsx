@@ -225,3 +225,91 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           title: row.title,
           author: row.author,
           isbn: row.isbn,
+          script_type: row.script_type,
+          age_range: row.age_range,
+          status: row.status,
+          owner_id: row.owner_id,
+          owner_name: row.owner_name || "Community Member",
+          cover_hue: row.cover_hue,
+        }));
+        setBooks([...dbBooks, ...seedBooks]);
+      }
+    }
+  };
+
+  const setBookStatus: StoreCtx["setBookStatus"] = async (id, status) => {
+    const { error } = await supabase
+      .from("books")
+      .update({ status })
+      .eq("id", id);
+
+    if (!error) {
+      setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+    }
+  };
+
+  const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
+    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
+    if (!cleanIsbn) return null;
+
+    try {
+      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
+      const olRes = await fetch(olUrl);
+      if (olRes.ok) {
+        const olData = await olRes.json();
+        const bookKey = `ISBN:${cleanIsbn}`;
+        if (olData && olData[bookKey]) {
+          const bookInfo = olData[bookKey];
+          return {
+            title: bookInfo.title || "Unknown Book",
+            author: bookInfo.authors?.[0]?.name || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) { /* fallback hook */ }
+
+    try {
+      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
+      const gbRes = await fetch(gbUrl);
+      if (gbRes.ok) {
+        const gbData = await gbRes.json();
+        if (gbData && gbData.items && gbData.items.length > 0) {
+          const volumeInfo = gbData.items[0].volumeInfo;
+          return {
+            title: volumeInfo.title || "Unknown Book",
+            author: volumeInfo.authors?.[0] || "Unknown Author",
+          };
+        }
+      }
+    } catch (e) { console.error(e); }
+
+    return null;
+  };
+
+  const toggleSaveBook = (id: string) => {
+    setSavedBookIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const requestBook: StoreCtx["requestBook"] = (book, method, note) => {
+    setBookStatus(book.id, "reserved");
+  };
+
+  const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
+  const updateProfile: StoreCtx["updateProfile"] = async (patch) => { /* logic wrapper stub */ };
+
+  return (
+    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export function useStore() {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("StoreProvider missing");
+  return v;
+}
+
+export { CURRENT_USER_ID };
