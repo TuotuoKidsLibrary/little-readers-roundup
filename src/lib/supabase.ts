@@ -11,3 +11,5 @@ export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co", 
   supabaseAnonKey || "placeholder"
 );
+
+// Production rebuild trigger: local environment validation update
