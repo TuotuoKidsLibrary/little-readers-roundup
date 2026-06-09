@@ -6,15 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin, Heart } from "lucide-react";
+import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin, Heart, Check, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useI18n } from "@/lib/i18n";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
-      { title: "Account & Membership — 小书阁" },
+      { title: "Account & Membership — 妥妥绘本馆" },
       { name: "description", content: "Manage your profile, membership, and wallet." },
     ],
   }),
@@ -24,6 +25,36 @@ export const Route = createFileRoute("/account")({
 function AccountPage() {
   const { user, updateProfile, isAuthenticated } = useStore();
   const { t } = useI18n();
+
+  // Local state to manage editing mode and smooth layout inputs
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(user.name);
+  const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
+  const [zip, setZip] = useState(user.zip_code);
+
+  // Synchronize local input form states whenever the core global user switches
+  useEffect(() => {
+    setName(user.name);
+    setNeighborhood(user.neighborhood_location);
+    setZip(user.zip_code);
+  }, [user]);
+
+  const handleSave = async () => {
+    await updateProfile({
+      name: name,
+      neighborhood_location: neighborhood,
+      zip_code: zip,
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setName(user.name);
+    setNeighborhood(user.neighborhood_location);
+    setZip(user.zip_code);
+    setIsEditing(false);
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 space-y-5">
       <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap">{t("account_title")}</h1>
@@ -32,21 +63,48 @@ function AccountPage() {
         <div className="flex items-center gap-4">
           <Avatar className="size-14">
             <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
-              {isAuthenticated ? user.name.split(" ").map((w) => w[0]).join("") : "GV"}
+              {isAuthenticated ? name.split(" ").map((w) => w[0]).join("") : "GV"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <p className="font-serif font-bold text-xl leading-none">
-              {isAuthenticated ? user.name : t("account_guest_name")}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {isAuthenticated ? t("account_member_since") : t("account_guest_subtitle")}
-            </p>
+          <div className="flex-1 space-y-1">
+            {isEditing ? (
+              <div className="grid gap-1.5 max-w-xs">
+                <Label htmlFor="edit-name" className="text-xs">Display Name</Label>
+                <Input 
+                  id="edit-name" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="h-8 text-sm"
+                />
+              </div>
+            ) : (
+              <>
+                <p className="font-serif font-bold text-xl leading-none">
+                  {isAuthenticated ? user.name : t("account_guest_name")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isAuthenticated ? t("account_member_since") : t("account_guest_subtitle")}
+                </p>
+              </>
+            )}
           </div>
           {isAuthenticated && (
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Settings className="size-4" /> {t("edit")}
-            </Button>
+            <div className="flex gap-2">
+              {isEditing ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={handleCancel} className="gap-1 text-muted-foreground">
+                    <X className="size-4" /> Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSave} className="gap-1">
+                    <Check className="size-4" /> Save
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="gap-1.5">
+                  <Settings className="size-4" /> {t("edit")}
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
@@ -76,8 +134,9 @@ function AccountPage() {
             <Label htmlFor="neighborhood">{t("neighborhood_label")}</Label>
             <Input
               id="neighborhood"
-              value={user.neighborhood_location}
-              onChange={(e) => updateProfile({ neighborhood_location: e.target.value })}
+              value={neighborhood}
+              disabled={!isEditing}
+              onChange={(e) => setNeighborhood(e.target.value)}
               placeholder="e.g., Midtown, Parker Towers, Alpharetta"
             />
           </div>
@@ -85,8 +144,9 @@ function AccountPage() {
             <Label htmlFor="zip">{t("zip_label")}</Label>
             <Input
               id="zip"
-              value={user.zip_code}
-              onChange={(e) => updateProfile({ zip_code: e.target.value })}
+              value={zip}
+              disabled={!isEditing}
+              onChange={(e) => setZip(e.target.value)}
               placeholder="11201"
               inputMode="numeric"
               maxLength={10}
@@ -159,20 +219,20 @@ function AccountPage() {
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="card">{t("card_number")}</Label>
-              <Input id="card" placeholder="•••• •••• •••• 4242" />
+              <Input id="card" placeholder="•••• •••• •••• 4242" disabled />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
                 <Label htmlFor="exp">{t("expiry")}</Label>
-                <Input id="exp" placeholder="MM/YY" />
+                <Input id="exp" placeholder="MM/YY" disabled />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="cvc">{t("cvc")}</Label>
-                <Input id="cvc" placeholder="123" />
+                <Input id="cvc" placeholder="123" disabled />
               </div>
             </div>
           </div>
-          <Button variant="outline" className="w-full sm:w-auto">{t("save_payment")}</Button>
+          <Button variant="outline" className="w-full sm:w-auto" disabled>{t("save_payment")}</Button>
         </div>
       </Card>
       )}
