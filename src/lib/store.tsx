@@ -23,7 +23,6 @@ function loadGuestSavedBooks(): string[] {
   }
 }
 
-// Keep the initial fallback mock data array safe for platform demonstrations
 const seedBooks: Book[] = [
   { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
   { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787539732220", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
@@ -78,12 +77,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile>(guestUser);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Stubs for messaging layouts
   const [threads, setThreads] = useState<Thread[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activity, setActivity] = useState<ActivityRecord[]>([]);
 
-  // Sync saved favorites to local browser space
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -91,7 +88,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [savedBookIds]);
 
-  // 🔄 Real-time synchronizer hook: Automatically polls database records on startup
+  // Sync real books from database table on initialization
   useEffect(() => {
     async function syncCatalog() {
       const { data, error } = await supabase
@@ -100,7 +97,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        // Map postgres field layout structures into frontend type parameters
         const dbBooks: Book[] = data.map((b: any) => ({
           id: b.id,
           title: b.title,
@@ -117,7 +113,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Check if user is already securely logged in on browser session refresh
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
         setIsAuthenticated(true);
@@ -164,7 +159,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
 
     if (data.user) {
-      // Create their public data row record profile inside the SQL tables
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           id: data.user.id,
@@ -231,91 +225,3 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           title: row.title,
           author: row.author,
           isbn: row.isbn,
-          script_type: row.script_type,
-          age_range: row.age_range,
-          status: row.status,
-          owner_id: row.owner_id,
-          owner_name: row.owner_name || "Community Member",
-          cover_hue: row.cover_hue,
-        }));
-        setBooks([...dbBooks, ...seedBooks]);
-      }
-    }
-  };
-
-  const setBookStatus: StoreCtx["setBookStatus"] = async (id, status) => {
-    const { error } = await supabase
-      .from("books")
-      .update({ status })
-      .eq("id", id);
-
-    if (!error) {
-      setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
-    }
-  };
-
-  const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
-    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
-    if (!cleanIsbn) return null;
-
-    try {
-      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
-      const olRes = await fetch(olUrl);
-      if (olRes.ok) {
-        const olData = await olRes.json();
-        const bookKey = `ISBN:${cleanIsbn}`;
-        if (olData && olData[bookKey]) {
-          const bookInfo = olData[bookKey];
-          return {
-            title: bookInfo.title || "Unknown Book",
-            author: bookInfo.authors?.[0]?.name || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { /* fallback sequential hook */ }
-
-    try {
-      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
-      const gbRes = await fetch(gbUrl);
-      if (gbRes.ok) {
-        const gbData = await gbRes.json();
-        if (gbData && gbData.items && gbData.items.length > 0) {
-          const volumeInfo = gbData.items[0].volumeInfo;
-          return {
-            title: volumeInfo.title || "Unknown Book",
-            author: volumeInfo.authors?.[0] || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { console.error(e); }
-
-    return null;
-  };
-
-  const toggleSaveBook = (id: string) => {
-    setSavedBookIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  const requestBook: StoreCtx["requestBook"] = (book, method, note) => {
-    setBookStatus(book.id, "reserved");
-  };
-
-  const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
-  const updateProfile: StoreCtx["updateProfile"] = async (patch) => { /* logic wrapper stub */ };
-
-  return (
-    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
-      {children}
-    </Ctx.Provider>
-  );
-}
-
-export function useStore() {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("StoreProvider missing");
-  return v;
-}
-
-export { CURRENT_USER_ID };
