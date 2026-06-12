@@ -58,7 +58,7 @@ const dict = {
     en: "Right now, your contributions are stored safely on this device only. Sign up today to start managing your children's Chinese books and sharing books with the community!",
     zh: "目前您的图书仅保存在此设备上。立即注册，开始管理您孩子的中文绘本并与社群分享图书吧！",
   },
-  unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能！" },
+  unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能" },
   convert_account: { en: "Become a Member", zh: "成为会员" },
   login_title: { en: "Welcome to Tuotuo Kids Library", zh: "欢迎来到妥妥绘本馆" },
   login_description: { en: "Log in or create a free account to join the community", zh: "登录或创建账户加入我们的社群" },
