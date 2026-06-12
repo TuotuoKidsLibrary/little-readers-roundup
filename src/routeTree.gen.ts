@@ -1,7 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
 // noinspection JSUnusedGlobalSymbols
-// This file was manually repaired to bypass the TanStack Start compiler cache lock
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as WelcomeImport } from './routes/welcome'
@@ -66,5 +65,5 @@ export const routeTree = rootRoute.addChildren([
   IndexRoute,
   AccountRoute,
   ShelfRoute,
-  WelcomeRoute,
+  WelcomeRoute
 ])
