@@ -12,4 +12,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // We pass additional standard Vite settings through this 'vite' block
+  vite: {
+    server: {
+      hmr: {
+        overlay: false // 👈 This commands the browser to hide the red error wall
+      }
+    }
+  }
 });
