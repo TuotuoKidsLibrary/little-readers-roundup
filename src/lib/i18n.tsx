@@ -92,7 +92,7 @@ const dict = {
   email: { en: "Email Address", zh: "电子邮箱" },
   password: { en: "Password", zh: "密码" },
   neighborhood: { en: "Neighborhood", zh: "所在社区" },
-  zip: { en: "Zip Code", zh: "邮政编码" },
+  zip: { en: "Zip Code", zh: "邮编" },
   create_my_account: { en: "Create my account", zh: "创建账户" },
   welcome_back: { en: "Welcome back!", zh: "欢迎回来！" },
   contribute_title: { en: "Contribute a book", zh: "分享一本绘本" },
