@@ -19,7 +19,7 @@ const ShelfRoute = ShelfImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AccountRoute = AccountRoute.update({
+const AccountRoute = AccountImport.update({
   path: '/account',
   getParentRoute: () => rootRoute,
 } as any)
