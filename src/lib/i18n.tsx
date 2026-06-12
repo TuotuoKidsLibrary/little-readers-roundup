@@ -61,10 +61,10 @@ const dict = {
   unlock_perks: { en: "Unlock Full Membership Perks!", zh: "解锁会员功能！" },
   convert_account: { en: "Become a Member", zh: "成为会员" },
   login_title: { en: "Welcome to Tuotuo Kids Library", zh: "欢迎来到妥妥绘本馆" },
-  login_description: { en: "Log in or create a free account to join the community", zh: "登录 or 创建账户加入我们的社群" },
+  login_description: { en: "Log in or create a free account to join the community", zh: "登录或创建账户加入我们的社群" },
   edit: { en: "Edit", zh: "编辑" },
   neighborhood_label: { en: "Neighborhood / Community Name", zh: "所在社区" },
-  zip_label: { en: "Zip Code", zh: "邮政编码" },
+  zip_label: { en: "Zip Code", zh: "邮编" },
   neighborhood_hint: {
     en: "Used to help local parents calculate meetup distances for exchanges.",
     zh: "用于帮助附近家长计算面交距离。",
