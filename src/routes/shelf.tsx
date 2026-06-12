@@ -124,4 +124,16 @@ function ShelfPage() {
   );
 }
 
-function StatCard({ label, value, Icon }: { label: string; value: number
+function StatCard({ label, value, Icon }: { label: string; value: any; Icon: any }) {
+  return (
+    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
+      <div className="p-2 bg-gray-50 rounded-lg text-gray-500">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <p className="text-xs text-gray-500 font-medium">{label}</p>
+        <p className="text-lg font-bold text-gray-900">{value}</p>
+      </div>
+    </div>
+  );
+}
