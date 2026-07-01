@@ -1,19 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useStore, CURRENT_USER_ID } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { LogBookDialog } from "@/components/LogBookDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
-import { Send, ArrowLeft, BookOpen, Activity, MessageSquare, History } from "lucide-react";
+import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/shelf")({
   head: () => ({
@@ -26,12 +26,27 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, activity, isAuthenticated } = useStore();
+  const { books, requests, user, isAuthenticated } = useStore();
   const { t } = useI18n();
-  const ownerId = isAuthenticated ? CURRENT_USER_ID : "guest_user";
-  const mine = useMemo(() => books.filter((b) => b.owner_id === ownerId), [books, ownerId]);
+  const mine = useMemo(
+    () => (isAuthenticated ? books.filter((b) => b.owner_id === user.id) : []),
+    [books, user.id, isAuthenticated],
+  );
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
   const [selected, setSelected] = useState<Book | null>(null);
+
+  const activity = useMemo(
+    () =>
+      requests.map((r) => ({
+        id: r.id,
+        type: r.owner_id === user.id ? ("lend" as const) : ("borrow" as const),
+        book_title: r.book_title,
+        at: new Date(r.created_at).toLocaleDateString(),
+        method: r.method,
+        status: r.status,
+      })),
+    [requests, user.id],
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-6">
@@ -100,19 +115,7 @@ function ShelfPage() {
           ) : (
             <ol className="relative border-l border-border ml-3 space-y-4">
               {activity.map((a) => (
-                <li key={a.id} className="ml-5">
-                  <span className="absolute -left-1.5 mt-1.5 size-3 rounded-full bg-primary ring-4 ring-background" />
-                  <Card className="p-4 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                        {a.type} · {a.at}
-                      </p>
-                      <h3 className="font-serif font-bold">{a.book_title}</h3>
-                      {a.method && <p className="text-xs text-muted-foreground">via {a.method}</p>}
-                    </div>
-                    <Badge variant="secondary">{a.status}</Badge>
-                  </Card>
-                </li>
+                <ActivityItem key={a.id} item={a} />
               ))}
             </ol>
           )}
@@ -121,6 +124,178 @@ function ShelfPage() {
 
       <BookDetailSheet book={selected} open={!!selected} onOpenChange={(o) => !o && setSelected(null)} />
     </div>
+  );
+}
+
+function MessagesPanel() {
+  const { threads, messages, requests, user, sendMessage, isAuthenticated } = useStore();
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const activeThread = threads.find((t) => t.id === activeThreadId) ?? threads[0];
+  const threadMessages = activeThread
+    ? messages
+        .filter((m) => m.request_id === activeThread.id)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    : [];
+  const request = activeThread ? requests.find((r) => r.id === activeThread.id) : null;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [threadMessages.length]);
+
+  if (!isAuthenticated) {
+    return <EmptyState text="Log in to see your conversations." />;
+  }
+
+  if (threads.length === 0) {
+    return <EmptyState text="No conversations yet. Request a book to start one!" />;
+  }
+
+  const handleSend = async () => {
+    if (!draft.trim() || sending || !activeThread) return;
+    setSending(true);
+    const { error } = await sendMessage(activeThread.id, draft.trim());
+    setSending(false);
+    if (!error) setDraft("");
+  };
+
+  return (
+    <div className="grid sm:grid-cols-[220px_1fr] gap-4 min-h-[360px]">
+      <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-visible">
+        {threads.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => { setActiveThreadId(t.id); setDraft(""); }}
+            className={`text-left rounded-xl border p-3 shrink-0 sm:shrink min-w-[180px] sm:min-w-0 transition-colors ${
+              t.id === activeThread.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+            }`}
+          >
+            <p className="text-sm font-medium truncate">{t.book_title}</p>
+            <p className="text-xs text-muted-foreground truncate">{t.other_user_name}</p>
+            <p className="text-xs text-muted-foreground truncate mt-1">{t.last_message}</p>
+          </button>
+        ))}
+      </div>
+
+      <Card className="flex flex-col p-4 gap-3">
+        <div className="flex items-center gap-3 border-b border-border pb-3">
+          <Avatar className="size-9">
+            <AvatarFallback>{activeThread.other_user_name?.[0] ?? "?"}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-semibold">{activeThread.other_user_name}</p>
+            <p className="text-xs text-muted-foreground">{activeThread.book_title}</p>
+          </div>
+          {request && <Badge variant="secondary" className="ml-auto capitalize">{request.status}</Badge>}
+        </div>
+
+        <div className="flex-1 overflow-y-auto flex flex-col gap-2 max-h-72 min-h-[160px]">
+          {threadMessages.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              No messages yet — say hello to coordinate the exchange.
+            </p>
+          ) : (
+            threadMessages.map((m) => (
+              <div
+                key={m.id}
+                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                  m.sender_id === user.id
+                    ? "self-end bg-primary text-primary-foreground"
+                    : "self-start bg-muted"
+                }`}
+              >
+                {m.text}
+              </div>
+            ))
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        <div className="flex items-center gap-2 pt-2 border-t border-border">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            placeholder="Write a message…"
+            className="rounded-full"
+          />
+          <Button size="icon" className="rounded-full shrink-0" onClick={handleSend} disabled={sending || !draft.trim()}>
+            <Send className="size-4" />
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; book_title: string; at: string; method: string; status: string } }) {
+  const { updateRequestStatus } = useStore();
+  const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
+
+  const handleAccept = async () => {
+    setLoading("accept");
+    await updateRequestStatus(item.id, "accepted");
+    setLoading(null);
+  };
+
+  const handleDecline = async () => {
+    setLoading("decline");
+    await updateRequestStatus(item.id, "declined");
+    setLoading(null);
+  };
+
+  const statusColors: Record<string, string> = {
+    pending: "bg-amber-50 text-amber-700 border-amber-200",
+    accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    declined: "bg-red-50 text-red-700 border-red-200",
+    completed: "bg-blue-50 text-blue-700 border-blue-200",
+  };
+
+  return (
+    <li className="ml-5">
+      <span className="absolute -left-1.5 mt-1.5 size-3 rounded-full bg-primary ring-4 ring-background" />
+      <Card className="p-4 flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              {item.type === "lend" ? "Incoming request" : "Your request"} · {item.at}
+            </p>
+            <h3 className="font-serif font-bold">{item.book_title}</h3>
+            {item.method && <p className="text-xs text-muted-foreground capitalize">via {item.method}</p>}
+          </div>
+          <Badge variant="outline" className={`capitalize shrink-0 ${statusColors[item.status] ?? ""}`}>
+            {item.status}
+          </Badge>
+        </div>
+
+        {item.type === "lend" && item.status === "pending" && (
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1.5 border-red-200 text-red-600 hover:bg-red-50"
+              onClick={handleDecline}
+              disabled={!!loading}
+            >
+              <XCircle className="size-4" />
+              {loading === "decline" ? "Declining…" : "Decline"}
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+              onClick={handleAccept}
+              disabled={!!loading}
+            >
+              <CheckCircle className="size-4" />
+              {loading === "accept" ? "Accepting…" : "Accept"}
+            </Button>
+          </div>
+        )}
+      </Card>
+    </li>
   );
 }
 
@@ -134,6 +309,17 @@ function StatCard({ label, value, Icon }: { label: string; value: any; Icon: any
         <p className="text-xs text-gray-500 font-medium">{label}</p>
         <p className="text-lg font-bold text-gray-900">{value}</p>
       </div>
+    </div>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+      <div className="size-14 rounded-full bg-muted flex items-center justify-center">
+        <BookOpen className="size-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm text-muted-foreground max-w-xs">{text}</p>
     </div>
   );
 }
