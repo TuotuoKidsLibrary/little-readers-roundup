@@ -17,11 +17,13 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
   };
 
   const cleanIsbn = book.isbn ? book.isbn.replace(/[- ]/g, "").trim() : null;
-  
-  // Using Open Library's standard path
-  const realCoverUrl = cleanIsbn 
-    ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg`
-    : null;
+
+  // Prefer the stored cover_url (from LogBookDialog ISBN lookup), then try Open Library
+  const realCoverUrl = book.cover_url
+    ? book.cover_url
+    : cleanIsbn
+      ? `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-M.jpg`
+      : null;
 
   useEffect(() => {
     if (!realCoverUrl) {
