@@ -18,7 +18,7 @@ import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle,
 export const Route = createFileRoute("/shelf")({
   head: () => ({
     meta: [
-      { title: "My Shelf & Activity — 小书阁" },
+      { title: "My Shelf & Activity — 我的书架和分享情况" },
       { name: "description", content: "Your contributions, messages and exchange history." },
     ],
   }),
