@@ -168,6 +168,13 @@ const dict = {
   btn_back: { en: "Back", zh: "返回" },
   btn_submit: { en: "Submit Request", zh: "确认提交" },
   btn_reserved: { en: "Currently Reserved", zh: "已预约" },
+  delete: { en: "Delete", zh: "删除" },
+  delete_confirm: {
+    en: "Delete this book from your shelf? This cannot be undone.",
+    zh: "确定要从您的书架上删除这本书吗？此操作无法撤销。",
+  },
+  mark_completed: { en: "Mark as Completed", zh: "标记为已完成" },
+  status_completed: { en: "Completed", zh: "已完成" },
 } as const;
 
 export type TKey = keyof typeof dict;
