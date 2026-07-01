@@ -2,15 +2,14 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { useEffect } from "react";
 import { supabase } from "./supabase";
 import type {
-  ActivityRecord,
   Book,
+  BookRequest,
   BookStatus,
   Message,
   Thread,
   UserProfile,
 } from "./types";
 
-const CURRENT_USER_ID = "current_user";
 const GUEST_SAVED_KEY = "guest_saved_books_v1";
 
 function loadGuestSavedBooks(): string[] {
@@ -22,14 +21,6 @@ function loadGuestSavedBooks(): string[] {
     return [];
   }
 }
-
-const seedBooks: Book[] = [
-  { id: "b1", title: "小王子", author: "圣埃克苏佩里", isbn: "9787020042494", script_type: "Simplified", age_range: "6+", status: "available", owner_id: "u_mei", owner_name: "Mei L.", cover_hue: 18 },
-  { id: "b2", title: "猜猜我有多爱你", author: "山姆·麦克布雷尼", isbn: "9787539732220", script_type: "Simplified", age_range: "0-2", status: "available", owner_id: "u_jia", owner_name: "Jia W.", cover_hue: 38 },
-  { id: "b3", title: "好餓的毛毛蟲", author: "艾瑞·卡爾", isbn: "9787533455323", script_type: "Traditional", age_range: "0-2", status: "for_sale", price: 6, owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 62 },
-  { id: "b4", title: "三毛流浪记", author: "张乐平", isbn: "9787532497034", script_type: "Simplified", age_range: "6+", status: "donation", owner_id: "platform_admin", owner_name: "Library Collection", cover_hue: 8 },
-  { id: "b5", title: "我爸爸", author: "安东尼·布朗", isbn: "9787543463530", script_type: "Simplified", age_range: "3-5", status: "available", owner_id: CURRENT_USER_ID, owner_name: "You", cover_hue: 28 },
-];
 
 const guestUser: UserProfile = {
   id: "guest",
@@ -55,15 +46,17 @@ interface StoreCtx {
   savedBookIds: string[];
   threads: Thread[];
   messages: Message[];
-  activity: ActivityRecord[];
+  requests: BookRequest[];
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   signup: (input: SignupInput) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { cover_hue?: number }) => Promise<void>;
   setBookStatus: (id: string, status: BookStatus) => Promise<void>;
-  requestBook: (book: Book, method: string, note: string) => void;
-  sendMessage: (thread_id: string, text: string) => void;
+  requestBook: (book: Book, method: string, note: string) => Promise<{ error: string | null }>;
+  sendMessage: (requestId: string, text: string) => Promise<{ error: string | null }>;
+  fetchMessagesForThread: (requestId: string) => Promise<Message[]>;
+  updateRequestStatus: (requestId: string, status: BookRequest["status"]) => Promise<{ error: string | null }>;
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
   toggleSaveBook: (id: string) => void;
   fetchBookMetadata: (isbn: string) => Promise<{ title: string; author: string } | null>;
@@ -71,15 +64,37 @@ interface StoreCtx {
 
 const Ctx = createContext<StoreCtx | null>(null);
 
+async function loadCatalog(): Promise<Book[]> {
+  const { data, error } = await supabase
+    .from("books")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((b: any) => ({
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    isbn: b.isbn,
+    script_type: b.script_type,
+    age_range: b.age_range,
+    status: b.status,
+    owner_id: b.owner_id,
+    owner_name: b.owner_name || "Community Member",
+    cover_hue: b.cover_hue,
+    cover_url: b.cover_url || undefined,
+  }));
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [books, setBooks] = useState<Book[]>(seedBooks);
+  const [books, setBooks] = useState<Book[]>([]);
   const [savedBookIds, setSavedBookIds] = useState<string[]>(() => loadGuestSavedBooks());
   const [user, setUser] = useState<UserProfile>(guestUser);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  const [threads, setThreads] = useState<Thread[]>([]);
+
+  const [requests, setRequests] = useState<BookRequest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [activity, setActivity] = useState<ActivityRecord[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -88,40 +103,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, [savedBookIds]);
 
-  // Sync real books from database table on initialization
   useEffect(() => {
-    async function syncCatalog() {
-      const { data, error } = await supabase
-        .from("books")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        const dbBooks: Book[] = data.map((b: any) => ({
-          id: b.id,
-          title: b.title,
-          author: b.author,
-          isbn: b.isbn,
-          script_type: b.script_type,
-          age_range: b.age_range,
-          status: b.status,
-          owner_id: b.owner_id,
-          owner_name: b.owner_name || "Community Member",
-          cover_hue: b.cover_hue,
-        }));
-        setBooks([...dbBooks, ...seedBooks]);
-      }
-    }
+    loadCatalog().then(setBooks);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
         setIsAuthenticated(true);
         fetchAndSetProfile(session.user.id, session.user.email || "");
+        fetchRequestsAndMessages(session.user.id);
       }
     });
+  }, []);
 
-    syncCatalog();
-  }, [isAuthenticated]);
+  // Poll for new messages every 15s when logged in
+  useEffect(() => {
+    if (!isAuthenticated || user.id === "guest") return;
+    const interval = setInterval(() => fetchRequestsAndMessages(user.id), 15000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user.id]);
 
   async function fetchAndSetProfile(userId: string, email: string) {
     const { data } = await supabase
@@ -130,26 +129,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .single();
 
-    if (data) {
-      setUser({
-        id: userId,
-        name: data.name || email.split("@")[0],
-        membership_status: "Verified Library Member",
-        deposit_balance: 50.0,
-        wallet_balance: 0.0,
-        neighborhood_location: data.neighborhood_location || "",
-        zip_code: data.zip_code || "",
-      });
-    }
+    setUser({
+      id: userId,
+      name: data?.name || email.split("@")[0],
+      membership_status: "Verified Library Member",
+      deposit_balance: 0,
+      wallet_balance: 0,
+      neighborhood_location: data?.neighborhood_location || "",
+      zip_code: data?.zip_code || "",
+    });
+  }
+
+  async function fetchRequestsAndMessages(userId: string) {
+    const { data: reqData } = await supabase
+      .from("requests")
+      .select("*")
+      .or(`requester_id.eq.${userId},owner_id.eq.${userId}`)
+      .order("created_at", { ascending: false });
+
+    if (reqData) setRequests(reqData as BookRequest[]);
+
+    const { data: msgData } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+      .order("created_at", { ascending: true });
+
+    if (msgData) setMessages(msgData as Message[]);
   }
 
   const login: StoreCtx["login"] = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
-    
+
     if (data.user) {
       setIsAuthenticated(true);
       await fetchAndSetProfile(data.user.id, email);
+      await fetchRequestsAndMessages(data.user.id);
     }
     return { error: null };
   };
@@ -175,8 +191,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         id: data.user.id,
         name: name,
         membership_status: "Verified Library Member",
-        deposit_balance: 50.0,
-        wallet_balance: 0.0,
+        deposit_balance: 0,
+        wallet_balance: 0,
         neighborhood_location: neighborhood,
         zip_code: zip,
       });
@@ -189,6 +205,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser(guestUser);
     setIsAuthenticated(false);
     setSavedBookIds([]);
+    setRequests([]);
+    setMessages([]);
   };
 
   const addBook: StoreCtx["addBook"] = async (b) => {
@@ -214,26 +232,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error("Database book insertion error:", error);
     } else {
-      const { data } = await supabase
-        .from("books")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        const dbBooks: Book[] = data.map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          author: row.author,
-          isbn: row.isbn,
-          script_type: row.script_type,
-          age_range: row.age_range,
-          status: row.status,
-          owner_id: row.owner_id,
-          owner_name: row.owner_name || "Community Member",
-          cover_hue: row.cover_hue,
-        }));
-        setBooks([...dbBooks, ...seedBooks]);
-      }
+      setBooks(await loadCatalog());
     }
   };
 
@@ -251,7 +250,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateProfile: StoreCtx["updateProfile"] = async (patch) => {
     if (user.id === "guest") return;
 
-    // 🌟 Map the patch update direct to your Supabase profiles columns
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -262,7 +260,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .eq("id", user.id);
 
     if (!error) {
-      // Instantly update local screen state so changes reflect dynamically
       setUser((prev) => ({ ...prev, ...patch }));
     } else {
       console.error("Error updating database profile info:", error);
@@ -313,14 +310,126 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const requestBook: StoreCtx["requestBook"] = (book, method, note) => {
-    setBookStatus(book.id, "reserved");
+  const requestBook: StoreCtx["requestBook"] = async (book, method, note) => {
+    if (user.id === "guest") return { error: "Please log in to request a book." };
+
+    const { error } = await supabase.from("requests").insert([
+      {
+        book_id: book.id,
+        book_title: book.title,
+        requester_id: user.id,
+        requester_name: user.name,
+        owner_id: book.owner_id,
+        method,
+        note: note || null,
+        status: "pending",
+      },
+    ]);
+
+    if (error) {
+      console.error("Error creating request:", error);
+      return { error: error.message };
+    }
+
+    await setBookStatus(book.id, "reserved");
+    await fetchRequestsAndMessages(user.id);
+    return { error: null };
   };
 
-  const sendMessage: StoreCtx["sendMessage"] = (thread_id, text) => { /* logic wrapper stub */ };
+  const sendMessage: StoreCtx["sendMessage"] = async (requestId, text) => {
+    if (user.id === "guest") return { error: "Please log in to send messages." };
+
+    const request = requests.find((r) => r.id === requestId);
+    if (!request) return { error: "Conversation not found." };
+
+    const recipientId = request.requester_id === user.id ? request.owner_id : request.requester_id;
+
+    const { error } = await supabase.from("messages").insert([
+      {
+        request_id: requestId,
+        sender_id: user.id,
+        recipient_id: recipientId,
+        text,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error sending message:", error);
+      return { error: error.message };
+    }
+
+    await fetchRequestsAndMessages(user.id);
+    return { error: null };
+  };
+
+  const updateRequestStatus: StoreCtx["updateRequestStatus"] = async (requestId, status) => {
+    const { error } = await supabase
+      .from("requests")
+      .update({ status })
+      .eq("id", requestId);
+
+    if (error) return { error: error.message };
+
+    setRequests((prev) =>
+      prev.map((r) => (r.id === requestId ? { ...r, status } : r))
+    );
+
+    if (status === "declined") {
+      const req = requests.find((r) => r.id === requestId);
+      if (req) await setBookStatus(req.book_id, "available");
+    }
+
+    return { error: null };
+  };
+
+  const fetchMessagesForThread = async (requestId: string): Promise<Message[]> => {
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("request_id", requestId)
+      .order("created_at", { ascending: true });
+
+    return (data as Message[]) || [];
+  };
+
+  const threads: Thread[] = requests.map((r) => {
+    const isOwner = r.owner_id === user.id;
+    const threadMessages = messages.filter((m) => m.request_id === r.id);
+    const last = threadMessages[threadMessages.length - 1];
+    return {
+      id: r.id,
+      book_title: r.book_title,
+      other_user_name: isOwner ? r.requester_name : "Book Owner",
+      other_user_id: isOwner ? r.requester_id : r.owner_id,
+      last_message: last ? last.text : `Requested via ${r.method}${r.note ? `: "${r.note}"` : ""}`,
+      last_message_at: last ? last.created_at : r.created_at,
+    };
+  });
 
   return (
-    <Ctx.Provider value={{ user, books, savedBookIds, threads, messages, activity, isAuthenticated, login, signup, logout, addBook, setBookStatus, requestBook, sendMessage, updateProfile, toggleSaveBook, fetchBookMetadata }}>
+    <Ctx.Provider
+      value={{
+        user,
+        books,
+        savedBookIds,
+        threads,
+        messages,
+        requests,
+        isAuthenticated,
+        login,
+        signup,
+        logout,
+        addBook,
+        setBookStatus,
+        requestBook,
+        sendMessage,
+        fetchMessagesForThread,
+        updateRequestStatus,
+        updateProfile,
+        toggleSaveBook,
+        fetchBookMetadata,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );
@@ -331,5 +440,3 @@ export function useStore() {
   if (!v) throw new Error("StoreProvider missing");
   return v;
 }
-
-export { CURRENT_USER_ID };
