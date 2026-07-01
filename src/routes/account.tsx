@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CreditCard, ShieldCheck, Wallet, Settings, Sparkles, MapPin, Heart, Check, X } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Wallet, Settings, Sparkles, MapPin, Heart, Check, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useI18n } from "@/lib/i18n";
@@ -26,13 +26,11 @@ function AccountPage() {
   const { user, updateProfile, isAuthenticated } = useStore();
   const { t } = useI18n();
 
-  // Local state to manage editing mode and smooth layout inputs
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
   const [zip, setZip] = useState(user.zip_code);
 
-  // Synchronize local input form states whenever the core global user switches
   useEffect(() => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
@@ -70,10 +68,10 @@ function AccountPage() {
             {isEditing ? (
               <div className="grid gap-1.5 max-w-xs">
                 <Label htmlFor="edit-name" className="text-xs">Display Name</Label>
-                <Input 
-                  id="edit-name" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
+                <Input
+                  id="edit-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="h-8 text-sm"
                 />
               </div>
@@ -170,71 +168,33 @@ function AccountPage() {
       </Card>
 
       {isAuthenticated && (
-      <Card className="p-5 bg-gradient-to-br from-primary/10 via-accent/30 to-background border-primary/30">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Badge className="mb-2 gap-1">
-              <Sparkles className="size-3" /> {t("membership_badge")}
-            </Badge>
-            <h2 className="font-serif text-xl font-bold">{user.membership_status}</h2>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              {t("membership_blurb")}
-            </p>
+        <Card className="p-5 bg-gradient-to-br from-primary/10 via-accent/30 to-background border-primary/30">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Badge className="mb-2 gap-1">
+                <Sparkles className="size-3" /> {t("membership_badge")}
+              </Badge>
+              <h2 className="font-serif text-xl font-bold">{user.membership_status}</h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                {t("membership_blurb")}
+              </p>
+            </div>
+            <Button size="sm">{t("upgrade")}</Button>
           </div>
-          <Button size="sm">{t("upgrade")}</Button>
-        </div>
-      </Card>
+        </Card>
       )}
 
       {isAuthenticated && (
-      <Card className="p-5 bg-card">
-        <header className="flex items-center gap-2 mb-4">
-          <Wallet className="size-5 text-primary" />
-          <h2 className="font-serif font-bold text-lg">{t("wallet_title")}</h2>
-        </header>
-
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="rounded-xl bg-muted/60 p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <ShieldCheck className="size-3.5" /> {t("refundable_deposit")}
-            </div>
-            <p className="font-serif text-2xl font-bold">${user.deposit_balance.toFixed(2)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{t("deposit_hint")}</p>
+        <Card className="p-5 bg-card">
+          <header className="flex items-center gap-2 mb-4">
+            <Wallet className="size-5 text-primary" />
+            <h2 className="font-serif font-bold text-lg">{t("wallet_title")}</h2>
+          </header>
+          <div className="rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">Coming soon</p>
+            <p>Deposit tracking and in-app wallet are on the roadmap. For now, all exchange arrangements are handled directly between members via messages.</p>
           </div>
-          <div className="rounded-xl bg-muted/60 p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Wallet className="size-3.5" /> {t("wallet_balance")}
-            </div>
-            <p className="font-serif text-2xl font-bold">${user.wallet_balance.toFixed(2)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{t("wallet_hint")}</p>
-          </div>
-        </div>
-
-        <Separator className="mb-4" />
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <CreditCard className="size-4 text-muted-foreground" /> {t("billing")}
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="card">{t("card_number")}</Label>
-              <Input id="card" placeholder="•••• •••• •••• 4242" disabled />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label htmlFor="exp">{t("expiry")}</Label>
-                <Input id="exp" placeholder="MM/YY" disabled />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="cvc">{t("cvc")}</Label>
-                <Input id="cvc" placeholder="123" disabled />
-              </div>
-            </div>
-          </div>
-          <Button variant="outline" className="w-full sm:w-auto" disabled>{t("save_payment")}</Button>
-        </div>
-      </Card>
+        </Card>
       )}
     </div>
   );
