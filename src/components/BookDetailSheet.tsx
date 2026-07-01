@@ -21,14 +21,16 @@ export function BookDetailSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const { requestBook } = useStore();
+  const { requestBook, toggleSaveBook, savedBookIds, user, isAuthenticated } = useStore();
   const { t, lang } = useI18n(); 
   const [showForm, setShowForm] = useState(false);
   const [method, setMethod] = useState("meetup");
   const [note, setNote] = useState("");
-  const [isSaved, setIsSaved] = useState(false);
 
   if (!book) return null;
+
+  const isSaved = savedBookIds.includes(book.id);
+  const isOwnBook = isAuthenticated && user.id === book.owner_id;
 
   const getActionLabel = () => {
     if (book.status === "reserved") {
@@ -36,9 +38,6 @@ export function BookDetailSheet({
     }
     if (book.status === "for_sale") {
       return lang === "en" ? "Buy" : "购买";
-    }
-    if (book.status === "donation") {
-      return lang === "en" ? "Request to Borrow" : "申请借阅";
     }
     return lang === "en" ? "Request to Borrow" : "申请借阅";
   };
@@ -50,12 +49,9 @@ export function BookDetailSheet({
   ];
 
   const handleSaveToggle = () => {
-    const nextState = !isSaved;
-    setIsSaved(nextState);
-    if (nextState) {
-      toast.success(lang === "en" ? "Added to your favorites!" : "已添加到收藏夹！", {
-        description: book.title,
-      });
+    toggleSaveBook(book.id);
+    if (!isSaved) {
+      toast.success(lang === "en" ? "Added to your favorites!" : "已添加到收藏夹！", { description: book.title });
     } else {
       toast.info(lang === "en" ? "Removed from favorites" : "已从收藏夹中移除");
     }
@@ -67,9 +63,15 @@ export function BookDetailSheet({
     setNote("");
   };
 
-  const submit = () => {
+  const submit = async () => {
     const m = methods.find((x) => x.id === method)!.label;
-    requestBook(book, m, note);
+    const { error } = await requestBook(book, method, note);
+    if (error) {
+      toast.error(lang === "en" ? "Couldn't submit request" : "请求提交失败", {
+        description: error,
+      });
+      return;
+    }
     toast.success(lang === "en" ? "Exchange request submitted!" : "请求提交成功！", {
       description: `${book.title} · ${m}`,
     });
@@ -121,9 +123,11 @@ export function BookDetailSheet({
                 size="lg"
                 className="font-sans py-5 text-sm font-semibold tracking-wide"
                 onClick={() => setShowForm(true)}
-                disabled={book.status === "reserved"}
+                disabled={book.status === "reserved" || isOwnBook}
               >
-                {getActionLabel()}
+                {isOwnBook
+                  ? (lang === "en" ? "Your book" : "这是你的书")
+                  : getActionLabel()}
               </Button>
               <Button 
                 variant="outline" 
