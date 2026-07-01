@@ -13,7 +13,7 @@ import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { LogBookDialog } from "@/components/LogBookDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
-import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart } from "lucide-react";
+import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart, Trash2, PackageCheck } from "lucide-react";
 
 export const Route = createFileRoute("/shelf")({
   head: () => ({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook } = useStore();
+  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook, deleteBook, totalUnread } = useStore();
   const { t } = useI18n();
   const mine = useMemo(
     () => (isAuthenticated ? books.filter((b) => b.owner_id === user.id) : []),
@@ -80,8 +80,13 @@ function ShelfPage() {
           <TabsTrigger value="fav" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
             <Heart className="size-4" /> {t("tab_favorites")}
           </TabsTrigger>
-          <TabsTrigger value="msg" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
+          <TabsTrigger value="msg" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm relative">
             <MessageSquare className="size-4" /> {t("tab_msg")}
+            {totalUnread > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="hist" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
             <History className="size-4" /> {t("tab_history")}
@@ -98,15 +103,30 @@ function ShelfPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {mine.map((b) => (
-                <LogBookDialog
-                  key={b.id}
-                  bookToEdit={b}
-                  trigger={
-                    <div className="w-full text-left">
-                      <BookCard book={b} />
-                    </div>
-                  }
-                />
+                <div key={b.id} className="relative group">
+                  <LogBookDialog
+                    bookToEdit={b}
+                    trigger={
+                      <div className="w-full text-left">
+                        <BookCard book={b} />
+                      </div>
+                    }
+                  />
+                  <button
+                    type="button"
+                    aria-label={t("delete")}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (window.confirm(t("delete_confirm"))) {
+                        await deleteBook(b.id);
+                      }
+                    }}
+                    className="absolute top-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-muted-foreground"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -163,13 +183,19 @@ function ShelfPage() {
 }
 
 function MessagesPanel() {
-  const { threads, messages, requests, user, sendMessage, isAuthenticated } = useStore();
+  const { threads, messages, requests, user, sendMessage, isAuthenticated, unreadByThread, markThreadRead } = useStore();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? threads[0];
+
+  useEffect(() => {
+    if (activeThread) markThreadRead(activeThread.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeThread?.id, messages.length]);
+
   const threadMessages = activeThread
     ? messages
         .filter((m) => m.request_id === activeThread.id)
@@ -204,13 +230,18 @@ function MessagesPanel() {
           <button
             key={t.id}
             onClick={() => { setActiveThreadId(t.id); setDraft(""); }}
-            className={`text-left rounded-xl border p-3 shrink-0 sm:shrink min-w-[180px] sm:min-w-0 transition-colors ${
+            className={`relative text-left rounded-xl border p-3 shrink-0 sm:shrink min-w-[180px] sm:min-w-0 transition-colors ${
               t.id === activeThread.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
             }`}
           >
             <p className="text-sm font-medium truncate">{t.book_title}</p>
             <p className="text-xs text-muted-foreground truncate">{t.other_user_name}</p>
             <p className="text-xs text-muted-foreground truncate mt-1">{t.last_message}</p>
+            {unreadByThread[t.id] > 0 && (
+              <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                {unreadByThread[t.id]}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -268,7 +299,8 @@ function MessagesPanel() {
 
 function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; book_title: string; at: string; method: string; status: string } }) {
   const { updateRequestStatus } = useStore();
-  const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
+  const { t } = useI18n();
+  const [loading, setLoading] = useState<"accept" | "decline" | "complete" | null>(null);
 
   const handleAccept = async () => {
     setLoading("accept");
@@ -279,6 +311,12 @@ function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; b
   const handleDecline = async () => {
     setLoading("decline");
     await updateRequestStatus(item.id, "declined");
+    setLoading(null);
+  };
+
+  const handleComplete = async () => {
+    setLoading("complete");
+    await updateRequestStatus(item.id, "completed");
     setLoading(null);
   };
 
@@ -326,6 +364,20 @@ function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; b
             >
               <CheckCircle className="size-4" />
               {loading === "accept" ? "Accepting…" : "Accept"}
+            </Button>
+          </div>
+        )}
+
+        {item.status === "accepted" && (
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              className="flex-1 gap-1.5 bg-blue-600 hover:bg-blue-700"
+              onClick={handleComplete}
+              disabled={!!loading}
+            >
+              <PackageCheck className="size-4" />
+              {loading === "complete" ? "…" : t("mark_completed")}
             </Button>
           </div>
         )}
