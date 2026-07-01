@@ -1,6 +1,7 @@
 export type ScriptType = "Simplified" | "Traditional";
 export type AgeRange = "0-2" | "3-5" | "6+";
 export type BookStatus = "available" | "reserved" | "for_sale" | "donation" | "private";
+export type RequestStatus = "pending" | "accepted" | "declined" | "completed";
 
 export interface Book {
   id: string;
@@ -17,19 +18,35 @@ export interface Book {
   cover_url?: string;
 }
 
+export interface BookRequest {
+  id: string;
+  book_id: string;
+  book_title: string;
+  requester_id: string;
+  requester_name: string;
+  owner_id: string;
+  method: string;
+  note: string | null;
+  status: RequestStatus;
+  created_at: string;
+}
+
 export interface Message {
   id: string;
-  thread_id: string;
-  from: string;
-  to: string;
+  request_id: string;
+  sender_id: string;
+  recipient_id: string;
   text: string;
-  at: string;
+  created_at: string;
 }
 
 export interface Thread {
   id: string;
-  with_name: string;
   book_title: string;
+  other_user_name: string;
+  other_user_id: string;
+  last_message: string;
+  last_message_at: string;
 }
 
 export interface ActivityRecord {
