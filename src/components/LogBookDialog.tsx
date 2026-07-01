@@ -15,12 +15,13 @@ import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2 } 
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import type { AgeRange, BookStatus, ScriptType } from "@/lib/types";
+import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
 
-export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
-  const { addBook, books } = useStore();
+export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
+  const { addBook, setBookStatus, books } = useStore();
   const { t } = useI18n();
+  const isEditing = !!bookToEdit;
   const contributionOptions: {
     id: BookStatus;
     title: string;
@@ -33,30 +34,32 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     { id: "private", title: t("status_private"), sub: t("private_sub"), Icon: Lock },
   ];
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<BookStatus>("available");
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [isbn, setIsbn] = useState("");
-  const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
-  const [script, setScript] = useState<ScriptType>("Simplified");
-  const [age, setAge] = useState<AgeRange>("3-5");
-  const [price, setPrice] = useState("");
+  const [status, setStatus] = useState<BookStatus>(bookToEdit?.status ?? "available");
+  const [title, setTitle] = useState(bookToEdit?.title ?? "");
+  const [author, setAuthor] = useState(bookToEdit?.author ?? "");
+  const [isbn, setIsbn] = useState(bookToEdit?.isbn ?? "");
+  const [coverUrl, setCoverUrl] = useState<string | undefined>(bookToEdit?.cover_url);
+  const [script, setScript] = useState<ScriptType>(bookToEdit?.script_type ?? "Simplified");
+  const [age, setAge] = useState<AgeRange>(bookToEdit?.age_range ?? "3-5");
+  const [price, setPrice] = useState(bookToEdit?.price?.toString() ?? "");
   const [scanning, setScanning] = useState(false);
-  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached">("idle");
+  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached">(
+    isEditing ? "found" : "idle"
+  );
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
-    setStatus("available");
-    setTitle("");
-    setAuthor("");
-    setIsbn("");
-    setCoverUrl(undefined);
-    setScript("Simplified");
-    setAge("3-5");
-    setPrice("");
+    setStatus(bookToEdit?.status ?? "available");
+    setTitle(bookToEdit?.title ?? "");
+    setAuthor(bookToEdit?.author ?? "");
+    setIsbn(bookToEdit?.isbn ?? "");
+    setCoverUrl(bookToEdit?.cover_url);
+    setScript(bookToEdit?.script_type ?? "Simplified");
+    setAge(bookToEdit?.age_range ?? "3-5");
+    setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
-    setLookupState("idle");
+    setLookupState(isEditing ? "found" : "idle");
   };
 
   const runLookup = async () => {
@@ -67,7 +70,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     }
     setLookupState("loading");
 
-    // 1. Local community cache — has any member nationwide cataloged this ISBN?
     const cached = books.find((b) => b.isbn === cleaned);
     if (cached) {
       setTitle(cached.title);
@@ -79,7 +81,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       return;
     }
 
-    // 2. Open Library with 1.5s timeout
     const fetchWithTimeout = async (url: string, ms: number) => {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), ms);
@@ -108,7 +109,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       /* fall through to Google Books */
     }
 
-    // 3. Fallback — Google Books (open East-Asian-friendly registry)
     try {
       const res = await fetch(
         `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleaned}`,
@@ -132,30 +132,36 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     setLookupState("not_found");
   };
 
-  const saveBook = () => {
+  const saveBook = async () => {
     if (!title.trim()) {
       toast.error("Please enter the book title.");
       return;
     }
-    addBook({
-      title: title.trim(),
-      author: author.trim() || "Unknown",
-      isbn: isbn.trim() || "—",
-      script_type: script,
-      age_range: age,
-      status,
-      price: status === "for_sale" ? Number(price) || 0 : undefined,
-      cover_url: coverUrl,
-    });
-    toast.success(
-      status === "donation"
-        ? "Donation logged."
-        : status === "for_sale"
-          ? "Book listed for sale!"
-          : status === "private"
-            ? "Saved to your private shelf."
-            : "Book added to the Library!",
-    );
+
+    if (isEditing && bookToEdit) {
+      await setBookStatus(bookToEdit.id, status);
+      toast.success("Book updated!");
+    } else {
+      await addBook({
+        title: title.trim(),
+        author: author.trim() || "Unknown",
+        isbn: isbn.trim() || "—",
+        script_type: script,
+        age_range: age,
+        status,
+        price: status === "for_sale" ? Number(price) || 0 : undefined,
+        cover_url: coverUrl,
+      });
+      toast.success(
+        status === "donation"
+          ? "Donation logged."
+          : status === "for_sale"
+            ? "Book listed for sale!"
+            : status === "private"
+              ? "Saved to your private shelf."
+              : "Book added to the Library!",
+      );
+    }
     reset();
     setOpen(false);
   };
@@ -170,7 +176,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
     lookupState === "found" || lookupState === "not_found" || lookupState === "cached";
   const loading = lookupState === "loading";
 
-  // Auto-focus the Title input when fallback (not_found) is triggered
   useEffect(() => {
     if (lookupState === "not_found") {
       const id = setTimeout(() => titleRef.current?.focus(), 60);
@@ -195,12 +200,15 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
       </DialogTrigger>
       <DialogContent className="bg-card max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-serif text-2xl">{t("contribute_title")}</DialogTitle>
-          <DialogDescription>{t("contribute_subtitle")}</DialogDescription>
+          <DialogTitle className="font-serif text-2xl">
+            {isEditing ? "Edit Book" : t("contribute_title")}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing ? `Updating status for: ${bookToEdit?.title}` : t("contribute_subtitle")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {/* ISBN ingestion */}
           <div className="rounded-xl border border-border bg-background/60 p-3 flex flex-col gap-2.5">
             {scanning ? (
               <IsbnScanner
@@ -287,7 +295,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
 
           {showDetails && (
           <>
-          {/* Contribution choice */}
           <div className="grid gap-2">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("select_sharing_option")}
@@ -337,7 +344,6 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
             </p>
           )}
 
-          {/* Book details */}
           <div className="rounded-lg border border-border/60 bg-background/40 p-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               {t("confirm_book_details")}
@@ -390,7 +396,7 @@ export function LogBookDialog({ trigger }: { trigger?: React.ReactNode }) {
               {t("cancel")}
             </Button>
             <Button className="flex-1 rounded-full gap-2" onClick={saveBook}>
-              {status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
+              {isEditing ? "Save Changes" : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
             </Button>
           </div>
           </>
