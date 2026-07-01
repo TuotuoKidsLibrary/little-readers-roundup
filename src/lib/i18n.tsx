@@ -44,6 +44,11 @@ const dict = {
   tab_contrib: { en: "Contributions", zh: "我的图书" },
   tab_msg: { en: "Messages", zh: "信息" },
   tab_history: { en: "History", zh: "历史" },
+  tab_favorites: { en: "Favorites", zh: "收藏夹" },
+  favorites_empty: {
+    en: "No favorites yet. Tap the heart on any book to save it for later.",
+    zh: "还没有收藏。点击任意图书上的爱心，收藏以便稍后阅读。",
+  },
   total_contributed: { en: "Total Contributed", zh: "总共分享的图书册数" },
   active_loans: { en: "Active Loans", zh: "正在借阅的册数" },
   no_exchanges: { en: "No exchanges yet.", zh: "暂无分享记录。" },

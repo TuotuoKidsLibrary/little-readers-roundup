@@ -13,7 +13,7 @@ import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { LogBookDialog } from "@/components/LogBookDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
-import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle } from "lucide-react";
+import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart } from "lucide-react";
 
 export const Route = createFileRoute("/shelf")({
   head: () => ({
@@ -26,11 +26,15 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, requests, user, isAuthenticated } = useStore();
+  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook } = useStore();
   const { t } = useI18n();
   const mine = useMemo(
     () => (isAuthenticated ? books.filter((b) => b.owner_id === user.id) : []),
     [books, user.id, isAuthenticated],
+  );
+  const favorites = useMemo(
+    () => books.filter((b) => savedBookIds.includes(b.id)),
+    [books, savedBookIds],
   );
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
   const [selected, setSelected] = useState<Book | null>(null);
@@ -69,9 +73,12 @@ function ShelfPage() {
       <p className="text-sm text-muted-foreground mb-5">{t("shelf_subtitle")}</p>
 
       <Tabs defaultValue="contrib" className="w-full">
-        <TabsList className="w-full grid grid-cols-3 bg-muted/60 rounded-full p-1 h-auto">
+        <TabsList className="w-full grid grid-cols-4 bg-muted/60 rounded-full p-1 h-auto">
           <TabsTrigger value="contrib" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
             <BookOpen className="size-4" /> {t("tab_contrib")}
+          </TabsTrigger>
+          <TabsTrigger value="fav" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
+            <Heart className="size-4" /> {t("tab_favorites")}
           </TabsTrigger>
           <TabsTrigger value="msg" className="rounded-full gap-1.5 py-2 text-xs sm:text-sm">
             <MessageSquare className="size-4" /> {t("tab_msg")}
@@ -100,6 +107,34 @@ function ShelfPage() {
                     </div>
                   }
                 />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="fav" className="pt-5">
+          {favorites.length === 0 ? (
+            <EmptyState text={t("favorites_empty")} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {favorites.map((b) => (
+                <div key={b.id} className="relative group">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(b)}
+                    className="w-full text-left"
+                  >
+                    <BookCard book={b} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remove from favorites"
+                    onClick={(e) => { e.stopPropagation(); toggleSaveBook(b.id); }}
+                    className="absolute top-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-muted"
+                  >
+                    <Heart className="size-4 fill-red-500 text-red-500" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
