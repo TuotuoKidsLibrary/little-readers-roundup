@@ -60,9 +60,24 @@ interface StoreCtx {
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
   toggleSaveBook: (id: string) => void;
   fetchBookMetadata: (isbn: string) => Promise<{ title: string; author: string } | null>;
+  deleteBook: (id: string) => Promise<{ error: string | null }>;
+  unreadByThread: Record<string, number>;
+  totalUnread: number;
+  markThreadRead: (threadId: string) => void;
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
+
+const THREAD_READS_KEY = "thread_reads_v1";
+function loadThreadReads(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(THREAD_READS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
 
 async function loadCatalog(): Promise<Book[]> {
   const { data, error } = await supabase
@@ -95,6 +110,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const [requests, setRequests] = useState<BookRequest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [threadReads, setThreadReads] = useState<Record<string, string>>(() => loadThreadReads());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(THREAD_READS_KEY, JSON.stringify(threadReads));
+    } catch { /* ignore */ }
+  }, [threadReads]);
+
+  const markThreadRead = (threadId: string) => {
+    setThreadReads((prev) => ({ ...prev, [threadId]: new Date().toISOString() }));
+  };
+
+  const unreadByThread: Record<string, number> = {};
+  for (const m of messages) {
+    if (m.sender_id === user.id) continue;
+    const lastRead = threadReads[m.request_id];
+    if (!lastRead || new Date(m.created_at).getTime() > new Date(lastRead).getTime()) {
+      unreadByThread[m.request_id] = (unreadByThread[m.request_id] ?? 0) + 1;
+    }
+  }
+  const totalUnread = Object.values(unreadByThread).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -247,6 +284,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteBook: StoreCtx["deleteBook"] = async (id) => {
+    const { error } = await supabase
+      .from("books")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) return { error: error.message };
+    setBooks((prev) => prev.filter((b) => b.id !== id));
+    return { error: null };
+  };
+
   const updateProfile: StoreCtx["updateProfile"] = async (patch) => {
     if (user.id === "guest") return;
 
@@ -379,6 +427,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (req) await setBookStatus(req.book_id, "available");
     }
 
+    if (status === "completed") {
+      const req = requests.find((r) => r.id === requestId);
+      if (req) await setBookStatus(req.book_id, "available");
+    }
+
     return { error: null };
   };
 
@@ -428,6 +481,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updateProfile,
         toggleSaveBook,
         fetchBookMetadata,
+        deleteBook,
+        unreadByThread,
+        totalUnread,
+        markThreadRead,
       }}
     >
       {children}
