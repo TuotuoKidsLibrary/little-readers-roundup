@@ -15,7 +15,7 @@ import { useState, useEffect } from "react";
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
-      { title: "Account & Membership — 妥妥绘本馆" },
+      { title: "Account & Membership — 账号和会员信息" },
       { name: "description", content: "Manage your profile, membership, and wallet." },
     ],
   }),
