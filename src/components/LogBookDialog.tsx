@@ -20,7 +20,7 @@ import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
   const { addBook, updateBook, books } = useStore();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const isEditing = !!bookToEdit;
   const contributionOptions: {
     id: BookStatus;
@@ -43,8 +43,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [age, setAge] = useState<AgeRange>(bookToEdit?.age_range ?? "3-5");
   const [price, setPrice] = useState(bookToEdit?.price?.toString() ?? "");
   const [scanning, setScanning] = useState(false);
-  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached">(
-    isEditing ? "found" : "idle"
+  const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached" | "editing">(
+    isEditing ? "editing" : "idle"
   );
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -59,7 +59,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setAge(bookToEdit?.age_range ?? "3-5");
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
-    setLookupState(isEditing ? "found" : "idle");
+    setLookupState(isEditing ? "editing" : "idle");
   };
 
   const runLookup = async () => {
@@ -186,7 +186,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   };
 
   const showDetails =
-    lookupState === "found" || lookupState === "not_found" || lookupState === "cached";
+    lookupState === "found" || lookupState === "not_found" || lookupState === "cached" || lookupState === "editing";
   const loading = lookupState === "loading";
 
   useEffect(() => {
@@ -214,10 +214,10 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       <DialogContent className="bg-card max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl">
-            {isEditing ? (lang === "zh" ? "编辑书本信息" : "Edit Book") : t("contribute_title")}
+            {isEditing ? "Edit Book" : t("contribute_title")}
           </DialogTitle>
           <DialogDescription>
-            {isEditing ? (lang === "zh" ? `更新书本状态: ${bookToEdit?.title}` : `Updating status for: ${bookToEdit?.title}`) : t("contribute_subtitle")}
+            {isEditing ? `Updating status for: ${bookToEdit?.title}` : t("contribute_subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -289,6 +289,18 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                   <span className="font-serif font-bold text-sm break-words">{title}</span>
                   <span className="text-muted-foreground break-words">{author || "Unknown author"}</span>
                   <span className="text-[10px] text-primary mt-1">{t("pulled_from_ol")}</span>
+                </div>
+              </div>
+            )}
+            {lookupState === "editing" && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 flex gap-3 items-start">
+                {coverUrl && (
+                  <img src={coverUrl} alt={title} className="h-16 w-12 object-cover rounded-sm shadow" />
+                )}
+                <div className="flex flex-col text-xs min-w-0">
+                  <span className="font-serif font-bold text-sm break-words">{title}</span>
+                  <span className="text-muted-foreground break-words">{author || "Unknown author"}</span>
+                  <span className="text-[10px] text-primary mt-1">{t("editing_saved_book")}</span>
                 </div>
               </div>
             )}
@@ -409,7 +421,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
               {t("cancel")}
             </Button>
             <Button className="flex-1 rounded-full gap-2" onClick={saveBook}>
-              {isEditing ? (lang === "zh" ? "保存修改\u00a0\u00a0" : "Save Changes") : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
+              {isEditing ? "Save Changes" : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
             </Button>
           </div>
           </>
