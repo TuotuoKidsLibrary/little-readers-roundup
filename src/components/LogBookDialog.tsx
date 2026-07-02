@@ -20,7 +20,7 @@ import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
   const { addBook, updateBook, books } = useStore();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const isEditing = !!bookToEdit;
   const contributionOptions: {
     id: BookStatus;
@@ -214,10 +214,10 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       <DialogContent className="bg-card max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl">
-            {isEditing ? "Edit Book" : t("contribute_title")}
+            {isEditing ? (lang === "zh" ? "编辑书本信息" : "Edit Book") : t("contribute_title")}
           </DialogTitle>
           <DialogDescription>
-            {isEditing ? `Updating status for: ${bookToEdit?.title}` : t("contribute_subtitle")}
+            {isEditing ? (lang === "zh" ? `更新书本状态: ${bookToEdit?.title}` : `Updating status for: ${bookToEdit?.title}`) : t("contribute_subtitle")}
           </DialogDescription>
         </DialogHeader>
 
@@ -409,7 +409,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
               {t("cancel")}
             </Button>
             <Button className="flex-1 rounded-full gap-2" onClick={saveBook}>
-              {isEditing ? "Save Changes" : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
+              {isEditing ? (lang === "zh" ? "保存修改\u00a0\u00a0" : "Save Changes") : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
             </Button>
           </div>
           </>
