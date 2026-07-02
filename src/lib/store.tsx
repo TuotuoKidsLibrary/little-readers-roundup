@@ -92,6 +92,8 @@ async function loadCatalog(): Promise<Book[]> {
     id: b.id,
     title: b.title,
     author: b.author,
+    title_en: b.title_en || undefined,
+    author_en: b.author_en || undefined,
     isbn: b.isbn,
     script_type: b.script_type,
     age_range: b.age_range,
@@ -294,6 +296,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       {
         title: b.title,
         author: b.author,
+        title_en: b.title_en?.trim() || null,
+        author_en: b.author_en?.trim() || null,
         isbn: b.isbn ? b.isbn.replace(/[- ]/g, "").trim() : null,
         script_type: b.script_type,
         age_range: b.age_range,
@@ -329,6 +333,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .update({
         title: patch.title,
         author: patch.author,
+        title_en: patch.title_en?.trim() || null,
+        author_en: patch.author_en?.trim() || null,
         isbn: patch.isbn,
         script_type: patch.script_type,
         age_range: patch.age_range,
