@@ -122,7 +122,7 @@ function ShelfPage() {
                         await deleteBook(b.id);
                       }
                     }}
-                    className="absolute top-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-muted-foreground"
+                    className="absolute bottom-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-muted-foreground"
                   >
                     <Trash2 className="size-4" />
                   </button>
