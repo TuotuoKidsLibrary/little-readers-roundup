@@ -175,6 +175,47 @@ const dict = {
   },
   mark_completed: { en: "Mark as Completed", zh: "标记为已完成" },
   status_completed: { en: "Completed", zh: "已完成" },
+  wallet_coming_soon: { en: "Coming soon", zh: "即将推出" },
+  wallet_coming_soon_body: {
+    en: "Deposit tracking and in-app wallet are on the roadmap. For now, all exchange arrangements are handled directly between members via messages.",
+    zh: "押金追踪和应用内钱包功能即将推出。目前，所有的分享安排均通过站内消息由会员之间直接协调。",
+  },
+  editing_saved_book: { en: "Editing your saved book details", zh: "正在编辑已保存的绘本信息" },
+  page_not_found: { en: "Page not found", zh: "页面未找到" },
+  page_not_found_desc: {
+    en: "The page you're looking for doesn't exist or has been moved.",
+    zh: "您访问的页面不存在或已被移动。",
+  },
+  go_home: { en: "Go home", zh: "返回首页" },
+  members_only: { en: "Members only", zh: "仅限会员" },
+  members_only_desc: {
+    en: "Please log in or create a free account to contribute books, send messages, or manage your shelf!",
+    zh: "请登录或创建免费账户，即可分享绘本、发送消息或管理您的书架！",
+  },
+  login_or_signup: { en: "Log in / Sign up", zh: "登录 / 注册" },
+  keep_browsing: { en: "Keep browsing", zh: "继续浏览" },
+  incoming_request: { en: "Incoming request", zh: "收到的请求" },
+  your_request: { en: "Your request", zh: "您的请求" },
+  decline: { en: "Decline", zh: "拒绝" },
+  declining: { en: "Declining…", zh: "拒绝中…" },
+  accept: { en: "Accept", zh: "同意" },
+  accepting: { en: "Accepting…", zh: "同意中…" },
+  remove_from_favorites: { en: "Remove from favorites", zh: "从收藏夹中移除" },
+  log_in_to_see_conversations: { en: "Log in to see your conversations.", zh: "登录后即可查看您的对话。" },
+  no_conversations_start: {
+    en: "No conversations yet. Request a book to start one!",
+    zh: "暂无对话。申请借阅一本图书即可开始对话！",
+  },
+  no_messages_in_thread: {
+    en: "No messages yet — say hello to coordinate the exchange.",
+    zh: "暂无消息 — 打个招呼，安排一下交换事宜吧。",
+  },
+  write_message_placeholder: { en: "Write a message…", zh: "输入消息…" },
+  display_name_label: { en: "Display Name", zh: "显示名称" },
+  welcome_tagline: {
+    en: "Borrow, sell & share treasured 中文 picture books with neighbor families.",
+    zh: "与邻里家庭一起借阅、出售和分享珍藏的中文绘本。",
+  },
 } as const;
 
 export type TKey = keyof typeof dict;
