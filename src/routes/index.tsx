@@ -61,8 +61,13 @@ function Index() {
         if (status !== "all" && b.status !== status) return false;
         if (q.trim()) {
           const t = q.toLowerCase();
-          if (!b.title.toLowerCase().includes(t) && !b.author.toLowerCase().includes(t) && !b.isbn.includes(t))
-            return false;
+          const matches =
+            b.title.toLowerCase().includes(t) ||
+            b.author.toLowerCase().includes(t) ||
+            (b.title_en?.toLowerCase().includes(t) ?? false) ||
+            (b.author_en?.toLowerCase().includes(t) ?? false) ||
+            b.isbn.includes(t);
+          if (!matches) return false;
         }
         return true;
       }),
