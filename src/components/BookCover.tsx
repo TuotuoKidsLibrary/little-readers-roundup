@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Book } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
+import { getDisplayTitle, getDisplayAuthor } from "@/lib/bookDisplay";
 
 interface BookCoverProps {
   book: Book;
@@ -7,6 +9,7 @@ interface BookCoverProps {
 }
 
 export function BookCover({ book, size = "md" }: BookCoverProps) {
+  const { lang } = useI18n();
   const [isValidImage, setIsValidImage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,7 +67,7 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
       <div className={`${sizeClasses[size]} relative rounded-md overflow-hidden bg-muted border border-border/40`}>
         <img
           src={realCoverUrl}
-          alt={book.title}
+          alt={getDisplayTitle(book, lang)}
           className="w-full h-full object-cover object-center"
           loading="lazy"
         />
@@ -83,9 +86,9 @@ export function BookCover({ book, size = "md" }: BookCoverProps) {
       }}
       className={`${sizeClasses[size]} rounded-md border flex flex-col justify-between p-2 text-center font-serif font-bold leading-tight select-none break-all overflow-hidden`}
     >
-      <span className="block w-full line-clamp-3">{book.title}</span>
+      <span className="block w-full line-clamp-3">{getDisplayTitle(book, lang)}</span>
       <span className="block w-full text-[0.65em] font-sans font-normal opacity-70 truncate pb-0.5">
-        {book.author}
+        {getDisplayAuthor(book, lang)}
       </span>
     </div>
   );
