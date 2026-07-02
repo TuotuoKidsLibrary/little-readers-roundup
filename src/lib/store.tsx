@@ -53,6 +53,7 @@ interface StoreCtx {
   logout: () => Promise<void>;
   addBook: (b: Omit<Book, "id" | "owner_id" | "owner_name" | "cover_hue"> & { cover_hue?: number }) => Promise<void>;
   setBookStatus: (id: string, status: BookStatus) => Promise<void>;
+  updateBook: (id: string, patch: Partial<Book>) => Promise<{ error: string | null }>;
   requestBook: (book: Book, method: string, note: string) => Promise<{ error: string | null }>;
   sendMessage: (requestId: string, text: string) => Promise<{ error: string | null }>;
   fetchMessagesForThread: (requestId: string) => Promise<Message[]>;
@@ -241,7 +242,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(guestUser);
     setIsAuthenticated(false);
-    setSavedBookIds([]);
     setRequests([]);
     setMessages([]);
   };
@@ -282,6 +282,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!error) {
       setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
     }
+  };
+
+  const updateBook: StoreCtx["updateBook"] = async (id, patch) => {
+    const { error } = await supabase
+      .from("books")
+      .update({
+        title: patch.title,
+        author: patch.author,
+        isbn: patch.isbn,
+        script_type: patch.script_type,
+        age_range: patch.age_range,
+        status: patch.status,
+        price: patch.price ?? null,
+        cover_url: patch.cover_url ?? null,
+      })
+      .eq("id", id)
+      .eq("owner_id", user.id); // guard against editing someone else's book
+
+    if (error) return { error: error.message };
+    setBooks(await loadCatalog());
+    return { error: null };
   };
 
   const deleteBook: StoreCtx["deleteBook"] = async (id) => {
@@ -474,6 +495,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         logout,
         addBook,
         setBookStatus,
+        updateBook,
         requestBook,
         sendMessage,
         fetchMessagesForThread,
