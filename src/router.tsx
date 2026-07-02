@@ -9,12 +9,12 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { StoreProvider } from "../lib/store";
-import { I18nProvider, useI18n } from "../lib/i18n";
-import { AppShell } from "../components/AppShell";
-import { Toaster } from "../components/ui/sonner";
+import appCss from "./styles.css?url";
+import { reportLovableError } from "./lib/lovable-error-reporting";
+import { StoreProvider } from "./lib/store";
+import { I18nProvider, useI18n } from "./lib/i18n";
+import { AppShell } from "./components/AppShell";
+import { Toaster } from "./components/ui/sonner";
 
 function NotFoundComponent() {
   const { t } = useI18n();
