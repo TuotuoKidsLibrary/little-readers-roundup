@@ -19,7 +19,7 @@ import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
-  const { addBook, setBookStatus, books } = useStore();
+  const { addBook, updateBook, books } = useStore();
   const { t } = useI18n();
   const isEditing = !!bookToEdit;
   const contributionOptions: {
@@ -139,7 +139,20 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     }
 
     if (isEditing && bookToEdit) {
-      await setBookStatus(bookToEdit.id, status);
+      const { error } = await updateBook(bookToEdit.id, {
+        title: title.trim(),
+        author: author.trim() || "Unknown",
+        isbn: isbn.trim() || "—",
+        script_type: script,
+        age_range: age,
+        status,
+        price: status === "for_sale" ? Number(price) || 0 : undefined,
+        cover_url: coverUrl,
+      });
+      if (error) {
+        toast.error("Couldn't save changes.", { description: error });
+        return;
+      }
       toast.success("Book updated!");
     } else {
       await addBook({
