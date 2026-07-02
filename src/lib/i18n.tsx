@@ -108,6 +108,12 @@ const dict = {
   book_title: { en: "Book Title", zh: "书名" },
   author: { en: "Author", zh: "作者" },
   title_zh_placeholder: { en: "Title (中文)", zh: "书名（中文）" },
+  book_title_en: { en: "English Title (optional)", zh: "英文书名（选填）" },
+  author_en: { en: "English Author (optional)", zh: "英文作者（选填）" },
+  english_info_hint: {
+    en: "If this is a translated book, add the English title/author so English-language browsers can find it too. Leave blank if there's no English edition — we'll show the Chinese info instead.",
+    zh: "如果这是一本翻译书籍，请填写英文书名/作者，方便使用英文浏览的用户查找。如果没有英文版本，可留空 — 系统将自动显示中文信息。",
+  },
   isbn_number: { en: "ISBN Number", zh: "ISBN 条形码编号" },
   manual_entry: { en: "Or enter 13-digit ISBN manually", zh: "或手动输入 13 位 ISBN" },
   lookup_book: { en: "Look up book", zh: "查询绘本" },
