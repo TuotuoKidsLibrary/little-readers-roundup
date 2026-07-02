@@ -4,13 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Wallet, Settings, Sparkles, MapPin, Heart, Check, X } from "lucide-react";
+import { Wallet, Settings, Sparkles, MapPin, Heart, Check, X, Camera, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useI18n } from "@/lib/i18n";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -23,19 +24,42 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
-  const { user, updateProfile, isAuthenticated } = useStore();
+  const { user, updateProfile, uploadAvatar, isAuthenticated } = useStore();
   const { t } = useI18n();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
   const [zip, setZip] = useState(user.zip_code);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
   }, [user]);
+
+  const handleAvatarClick = () => {
+    if (!isAuthenticated) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    const { error } = await uploadAvatar(file);
+    setUploadingAvatar(false);
+
+    if (error) {
+      toast.error("Couldn't upload photo", { description: error });
+    } else {
+      toast.success("Profile picture updated!");
+    }
+  };
 
   const handleSave = async () => {
     await updateProfile({
@@ -59,11 +83,36 @@ function AccountPage() {
 
       <Card className="p-5 bg-card space-y-5">
         <div className="flex items-center gap-4">
-          <Avatar className="size-14">
-            <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
-              {isAuthenticated ? name.split(" ").map((w) => w[0]).join("") : "GV"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="size-14">
+              {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+              <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
+                {isAuthenticated ? name.split(" ").map((w) => w[0]).join("") : "GV"}
+              </AvatarFallback>
+            </Avatar>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={handleAvatarClick}
+                disabled={uploadingAvatar}
+                aria-label="Change profile picture"
+                className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-card shadow-sm hover:bg-primary/90"
+              >
+                {uploadingAvatar ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Camera className="size-3.5" />
+                )}
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
           <div className="flex-1 space-y-1">
             {isEditing ? (
               <div className="grid gap-1.5 max-w-xs">
@@ -174,7 +223,7 @@ function AccountPage() {
               <Badge className="mb-2 gap-1">
                 <Sparkles className="size-3" /> {t("membership_badge")}
               </Badge>
-              <h2 className="font-serif text-xl font-bold">{"\n"}</h2>
+              <h2 className="font-serif text-xl font-bold">{user.membership_status}</h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-md">
                 {t("membership_blurb")}
               </p>
