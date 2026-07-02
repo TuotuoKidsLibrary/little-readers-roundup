@@ -37,6 +37,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [status, setStatus] = useState<BookStatus>(bookToEdit?.status ?? "available");
   const [title, setTitle] = useState(bookToEdit?.title ?? "");
   const [author, setAuthor] = useState(bookToEdit?.author ?? "");
+  const [titleEn, setTitleEn] = useState(bookToEdit?.title_en ?? "");
+  const [authorEn, setAuthorEn] = useState(bookToEdit?.author_en ?? "");
   const [isbn, setIsbn] = useState(bookToEdit?.isbn ?? "");
   const [coverUrl, setCoverUrl] = useState<string | undefined>(bookToEdit?.cover_url);
   const [script, setScript] = useState<ScriptType>(bookToEdit?.script_type ?? "Simplified");
@@ -53,6 +55,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setStatus(bookToEdit?.status ?? "available");
     setTitle(bookToEdit?.title ?? "");
     setAuthor(bookToEdit?.author ?? "");
+    setTitleEn(bookToEdit?.title_en ?? "");
+    setAuthorEn(bookToEdit?.author_en ?? "");
     setIsbn(bookToEdit?.isbn ?? "");
     setCoverUrl(bookToEdit?.cover_url);
     setScript(bookToEdit?.script_type ?? "Simplified");
@@ -74,6 +78,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     if (cached) {
       setTitle(cached.title);
       setAuthor(cached.author);
+      setTitleEn(cached.title_en ?? "");
+      setAuthorEn(cached.author_en ?? "");
       setScript(cached.script_type);
       setAge(cached.age_range);
       if (cached.cover_url) setCoverUrl(cached.cover_url);
@@ -142,6 +148,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       const { error } = await updateBook(bookToEdit.id, {
         title: title.trim(),
         author: author.trim() || "Unknown",
+        title_en: titleEn.trim() || undefined,
+        author_en: authorEn.trim() || undefined,
         isbn: isbn.trim() || "—",
         script_type: script,
         age_range: age,
@@ -158,6 +166,8 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       await addBook({
         title: title.trim(),
         author: author.trim() || "Unknown",
+        title_en: titleEn.trim() || undefined,
+        author_en: authorEn.trim() || undefined,
         isbn: isbn.trim() || "—",
         script_type: script,
         age_range: age,
@@ -381,6 +391,17 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
               <div className="grid gap-1.5">
                 <Label htmlFor="author">{t("author")}</Label>
                 <Input id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5 pt-1 border-t border-border/60">
+                <p className="text-[11px] text-muted-foreground pt-2 leading-snug">{t("english_info_hint")}</p>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="title_en">{t("book_title_en")}</Label>
+                <Input id="title_en" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="e.g. The Very Hungry Caterpillar" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="author_en">{t("author_en")}</Label>
+                <Input id="author_en" value={authorEn} onChange={(e) => setAuthorEn(e.target.value)} placeholder="e.g. Eric Carle" />
               </div>
               <div className="grid gap-1.5">
                 <Label>{t("script_type")}</Label>
