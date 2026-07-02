@@ -7,6 +7,8 @@ export interface Book {
   id: string;
   title: string;
   author: string;
+  title_en?: string;
+  author_en?: string;
   isbn: string;
   script_type: ScriptType;
   age_range: AgeRange;
