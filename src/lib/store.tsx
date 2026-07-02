@@ -263,6 +263,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         owner_id: session.user.id,
         owner_name: user.name || "Community Member",
         cover_hue: coverHue,
+        cover_url: b.cover_url ?? null,
       },
     ]);
 
