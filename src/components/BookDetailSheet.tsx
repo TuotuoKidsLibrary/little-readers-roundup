@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BookCover } from "./BookCover";
-import { useI18n } from "@/lib/i18n"; 
+import { useI18n } from "@/lib/i18n";
+import { getDisplayTitle, getDisplayAuthor } from "@/lib/bookDisplay";
 
 export function BookDetailSheet({
   book,
@@ -51,7 +52,7 @@ export function BookDetailSheet({
   const handleSaveToggle = () => {
     toggleSaveBook(book.id);
     if (!isSaved) {
-      toast.success(lang === "en" ? "Added to your favorites!" : "已添加到收藏夹！", { description: book.title });
+      toast.success(lang === "en" ? "Added to your favorites!" : "已添加到收藏夹！", { description: getDisplayTitle(book, lang) });
     } else {
       toast.info(lang === "en" ? "Removed from favorites" : "已从收藏夹中移除");
     }
@@ -73,7 +74,7 @@ export function BookDetailSheet({
       return;
     }
     toast.success(lang === "en" ? "Exchange request submitted!" : "请求提交成功！", {
-      description: `${book.title} · ${m}`,
+      description: `${getDisplayTitle(book, lang)} · ${m}`,
     });
     reset();
     onOpenChange(false);
@@ -99,8 +100,8 @@ export function BookDetailSheet({
           <div className="flex gap-4 items-center">
             <BookCover book={book} size="lg" />
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              <h2 className="font-sans text-xl font-bold leading-tight break-words">{book.title}</h2>
-              <p className="text-sm text-muted-foreground truncate">{book.author}</p>
+              <h2 className="font-sans text-xl font-bold leading-tight break-words">{getDisplayTitle(book, lang)}</h2>
+              <p className="text-sm text-muted-foreground truncate">{getDisplayAuthor(book, lang)}</p>
               <p className="text-xs text-muted-foreground">ISBN {book.isbn}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <Badge variant="secondary">
