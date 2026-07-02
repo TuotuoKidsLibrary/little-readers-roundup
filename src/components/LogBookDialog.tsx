@@ -398,7 +398,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                   <Label>{t("age_range")}</Label>
                   <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-1">
                     {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
-                      <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-xs ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-xs whitespace-pre-line ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
                         <RadioGroupItem value={a} className="sr-only" />
                         {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
                       </Label>
