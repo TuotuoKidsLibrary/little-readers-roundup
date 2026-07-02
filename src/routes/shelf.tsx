@@ -148,7 +148,7 @@ function ShelfPage() {
                   </button>
                   <button
                     type="button"
-                    aria-label="Remove from favorites"
+                    aria-label={t("remove_from_favorites")}
                     onClick={(e) => { e.stopPropagation(); toggleSaveBook(b.id); }}
                     className="absolute top-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-muted"
                   >
@@ -184,12 +184,13 @@ function ShelfPage() {
 
 function MessagesPanel() {
   const { threads, messages, requests, user, sendMessage, isAuthenticated, unreadByThread, markThreadRead } = useStore();
+  const { t } = useI18n();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const activeThread = threads.find((t) => t.id === activeThreadId) ?? threads[0];
+  const activeThread = threads.find((th) => th.id === activeThreadId) ?? threads[0];
 
   useEffect(() => {
     if (activeThread) markThreadRead(activeThread.id);
@@ -208,11 +209,11 @@ function MessagesPanel() {
   }, [threadMessages.length]);
 
   if (!isAuthenticated) {
-    return <EmptyState text="Log in to see your conversations." />;
+    return <EmptyState text={t("log_in_to_see_conversations")} />;
   }
 
   if (threads.length === 0) {
-    return <EmptyState text="No conversations yet. Request a book to start one!" />;
+    return <EmptyState text={t("no_conversations_start")} />;
   }
 
   const handleSend = async () => {
@@ -261,7 +262,7 @@ function MessagesPanel() {
         <div className="flex-1 overflow-y-auto flex flex-col gap-2 max-h-72 min-h-[160px]">
           {threadMessages.length === 0 ? (
             <p className="text-xs text-muted-foreground italic">
-              No messages yet — say hello to coordinate the exchange.
+              {t("no_messages_in_thread")}
             </p>
           ) : (
             threadMessages.map((m) => (
@@ -285,7 +286,7 @@ function MessagesPanel() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-            placeholder="Write a message…"
+            placeholder={t("write_message_placeholder")}
             className="rounded-full"
           />
           <Button size="icon" className="rounded-full shrink-0" onClick={handleSend} disabled={sending || !draft.trim()}>
@@ -334,7 +335,7 @@ function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; b
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              {item.type === "lend" ? "Incoming request" : "Your request"} · {item.at}
+              {item.type === "lend" ? t("incoming_request") : t("your_request")} · {item.at}
             </p>
             <h3 className="font-serif font-bold">{item.book_title}</h3>
             {item.method && <p className="text-xs text-muted-foreground capitalize">via {item.method}</p>}
@@ -354,7 +355,7 @@ function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; b
               disabled={!!loading}
             >
               <XCircle className="size-4" />
-              {loading === "decline" ? "Declining…" : "Decline"}
+              {loading === "decline" ? t("declining") : t("decline")}
             </Button>
             <Button
               size="sm"
@@ -363,7 +364,7 @@ function ActivityItem({ item }: { item: { id: string; type: "lend" | "borrow"; b
               disabled={!!loading}
             >
               <CheckCircle className="size-4" />
-              {loading === "accept" ? "Accepting…" : "Accept"}
+              {loading === "accept" ? t("accepting") : t("accept")}
             </Button>
           </div>
         )}
