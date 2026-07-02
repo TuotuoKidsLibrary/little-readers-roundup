@@ -4,6 +4,7 @@ import { BookCover } from "./BookCover";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { Edit3 } from "lucide-react";
+import { getDisplayTitle, getDisplayAuthor } from "@/lib/bookDisplay";
 
 interface BookCardProps {
   book: Book;
@@ -69,7 +70,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
       <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-sans font-bold text-base text-foreground leading-snug truncate flex-1">
-            {book.title}
+            {getDisplayTitle(book, lang)}
           </h3>
           {isMyContribution && (
             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-medium px-1.5 py-0 flex items-center gap-0.5 shrink-0">
@@ -78,7 +79,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">
-          {book.author}
+          {getDisplayAuthor(book, lang)}
         </p>
         
         <div className="flex flex-wrap gap-1.5 pt-1.5">
