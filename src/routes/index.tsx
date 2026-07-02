@@ -78,6 +78,7 @@ function Index() {
           { v: "all", l: lang === "en" ? "All" : "全部" },
           { v: "Simplified", l: t("script_simplified") },
           { v: "Traditional", l: t("script_traditional") },
+          { v: "Bilingual", l: t("script_bilingual") },
         ]}
         onChange={(v) => setScript(v as ScriptType | "all")}
       />

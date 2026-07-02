@@ -142,6 +142,7 @@ const dict = {
   select_script_type: { en: "Select Script Type", zh: "选择字体" },
   script_simplified: { en: "Simplified\nChinese", zh: "简体中文" },
   script_traditional: { en: "Traditional\nChinese", zh: "繁体中文" },
+  script_bilingual: { en: "English &\nChinese", zh: "中英\n双语" },
   age_range: { en: "Age Range", zh: "适用年龄" },
   select_age_range: { en: "Select Age Range", zh: "选择年龄段" },
   age_0_2: { en: "0-2 Years Old", zh: "0-2\n岁" },
