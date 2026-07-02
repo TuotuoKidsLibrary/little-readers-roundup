@@ -41,6 +41,14 @@ export function BookCard({ book, onClick }: BookCardProps) {
         </Badge>
       );
     }
+
+    if (book.status === "private") {
+      return (
+        <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 text-[11px] font-normal px-2 py-0">
+          {lang === "en" ? "Private" : "私密收藏"}
+        </Badge>
+      );
+    }
     
     return (
       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[11px] font-normal px-2 py-0">
