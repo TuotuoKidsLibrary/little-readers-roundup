@@ -66,5 +66,4 @@ export interface UserProfile {
   wallet_balance: number;
   neighborhood_location: string;
   zip_code: string;
-  avatar_url?: string;
 }
