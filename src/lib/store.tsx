@@ -103,6 +103,35 @@ async function loadCatalog(): Promise<Book[]> {
   }));
 }
 
+async function fetchSavedBookIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("saved_books")
+    .select("book_id")
+    .eq("user_id", userId);
+
+  if (error || !data) return [];
+  return data.map((r: any) => r.book_id as string);
+}
+
+// Carries over any books saved while browsing as a guest on this device
+// into the account once someone logs in or signs up, then clears the
+// device-level list so it doesn't keep leaking into other accounts.
+async function migrateGuestFavorites(userId: string) {
+  const guestIds = loadGuestSavedBooks();
+  if (guestIds.length === 0) return;
+
+  const rows = guestIds.map((book_id) => ({ user_id: userId, book_id }));
+  const { error } = await supabase
+    .from("saved_books")
+    .upsert(rows, { onConflict: "user_id,book_id" });
+
+  if (!error && typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(GUEST_SAVED_KEY);
+    } catch { /* ignore */ }
+  }
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [books, setBooks] = useState<Book[]>([]);
   const [savedBookIds, setSavedBookIds] = useState<string[]>(() => loadGuestSavedBooks());
@@ -136,19 +165,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (user.id !== "guest") return; // logged-in favorites live in Supabase, not this device's localStorage
     try {
       window.localStorage.setItem(GUEST_SAVED_KEY, JSON.stringify(savedBookIds));
     } catch { /* ignore */ }
-  }, [savedBookIds]);
+  }, [savedBookIds, user.id]);
 
   useEffect(() => {
     loadCatalog().then(setBooks);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session && session.user) {
         setIsAuthenticated(true);
         fetchAndSetProfile(session.user.id, session.user.email || "");
         fetchRequestsAndMessages(session.user.id);
+        await migrateGuestFavorites(session.user.id);
+        setSavedBookIds(await fetchSavedBookIds(session.user.id));
       }
     });
   }, []);
@@ -204,6 +236,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       await fetchAndSetProfile(data.user.id, email);
       await fetchRequestsAndMessages(data.user.id);
+      await migrateGuestFavorites(data.user.id);
+      setSavedBookIds(await fetchSavedBookIds(data.user.id));
     }
     return { error: null };
   };
@@ -234,6 +268,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         neighborhood_location: neighborhood,
         zip_code: zip,
       });
+
+      await migrateGuestFavorites(data.user.id);
+      setSavedBookIds(await fetchSavedBookIds(data.user.id));
     }
     return { error: null };
   };
@@ -242,6 +279,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(guestUser);
     setIsAuthenticated(false);
+    setSavedBookIds(loadGuestSavedBooks());
     setRequests([]);
     setMessages([]);
   };
@@ -375,9 +413,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleSaveBook = (id: string) => {
+    const isSaved = savedBookIds.includes(id);
     setSavedBookIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      isSaved ? prev.filter((x) => x !== id) : [...prev, id]
     );
+
+    if (user.id === "guest") return; // persisted via the localStorage effect above
+
+    if (isSaved) {
+      supabase
+        .from("saved_books")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("book_id", id)
+        .then(({ error }) => {
+          if (error) console.error("Error removing saved book:", error);
+        });
+    } else {
+      supabase
+        .from("saved_books")
+        .insert([{ user_id: user.id, book_id: id }])
+        .then(({ error }) => {
+          if (error) console.error("Error saving book:", error);
+        });
+    }
   };
 
   const requestBook: StoreCtx["requestBook"] = async (book, method, note) => {
