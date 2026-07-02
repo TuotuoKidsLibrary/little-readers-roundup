@@ -67,7 +67,7 @@ function AccountPage() {
           <div className="flex-1 space-y-1">
             {isEditing ? (
               <div className="grid gap-1.5 max-w-xs">
-                <Label htmlFor="edit-name" className="text-xs">Display Name</Label>
+                <Label htmlFor="edit-name" className="text-xs">{t("display_name_label")}</Label>
                 <Input
                   id="edit-name"
                   value={name}
@@ -191,8 +191,8 @@ function AccountPage() {
             <h2 className="font-serif font-bold text-lg">{t("wallet_title")}</h2>
           </header>
           <div className="rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">Coming soon</p>
-            <p>Deposit tracking and in-app wallet are on the roadmap. For now, all exchange arrangements are handled directly between members via messages.</p>
+            <p className="font-medium text-foreground mb-1">{t("wallet_coming_soon")}</p>
+            <p>{t("wallet_coming_soon_body")}</p>
           </div>
         </Card>
       )}
