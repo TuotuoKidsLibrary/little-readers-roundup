@@ -382,29 +382,31 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                 <Label htmlFor="author">{t("author")}</Label>
                 <Input id="author" value={author} onChange={(e) => setAuthor(e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <Label>{t("script_type")}</Label>
-                  <RadioGroup value={script} onValueChange={(v) => setScript(v as ScriptType)} className="flex gap-2">
-                    {(["Simplified", "Traditional", "Bilingual"] as ScriptType[]).map((s) => (
-                      <Label key={s} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm whitespace-pre-line ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
-                        <RadioGroupItem value={s} className="sr-only" />
-                        {s === "Simplified" ? t("script_simplified") : s === "Traditional" ? t("script_traditional") : t("script_bilingual")}
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>{t("age_range")}</Label>
-                  <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-1">
-                    {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
-                      <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-xs whitespace-pre-line ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
-                        <RadioGroupItem value={a} className="sr-only" />
-                        {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                </div>
+              <div className="grid gap-1.5">
+                <Label>{t("script_type")}</Label>
+                <RadioGroup value={script} onValueChange={(v) => setScript(v as ScriptType)} className="grid grid-cols-2 gap-2">
+                  {(["Simplified", "Traditional"] as ScriptType[]).map((s) => (
+                    <Label key={s} className={`cursor-pointer rounded-md border p-2 text-center text-sm whitespace-pre-line ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <RadioGroupItem value={s} className="sr-only" />
+                      {s === "Simplified" ? t("script_simplified") : t("script_traditional")}
+                    </Label>
+                  ))}
+                  <Label className={`col-span-2 cursor-pointer rounded-md border p-2 text-center text-sm whitespace-pre-line ${script === "Bilingual" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="Bilingual" className="sr-only" />
+                    {t("script_bilingual")}
+                  </Label>
+                </RadioGroup>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>{t("age_range")}</Label>
+                <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-2">
+                  {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
+                    <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm whitespace-pre-line ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <RadioGroupItem value={a} className="sr-only" />
+                      {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
+                    </Label>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
           </div>
