@@ -150,7 +150,7 @@ function ShelfPage() {
                     type="button"
                     aria-label={t("remove_from_favorites")}
                     onClick={(e) => { e.stopPropagation(); toggleSaveBook(b.id); }}
-                    className="absolute top-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-muted"
+                    className="absolute bottom-3 right-3 rounded-full bg-background/90 border border-border p-1.5 shadow-sm hover:bg-muted"
                   >
                     <Heart className="size-4 fill-red-500 text-red-500" />
                   </button>
