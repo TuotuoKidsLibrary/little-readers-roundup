@@ -389,7 +389,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                     {(["Simplified", "Traditional"] as ScriptType[]).map((s) => (
                       <Label key={s} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
                         <RadioGroupItem value={s} className="sr-only" />
-                        {s === "Simplified" ? "简体" : "繁體"}
+                        {s === "Simplified" ? t("script_simplified") : t("script_traditional")}
                       </Label>
                     ))}
                   </RadioGroup>
