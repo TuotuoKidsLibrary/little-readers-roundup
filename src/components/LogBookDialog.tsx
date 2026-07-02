@@ -386,12 +386,12 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                 <Label>{t("script_type")}</Label>
                 <RadioGroup value={script} onValueChange={(v) => setScript(v as ScriptType)} className="grid grid-cols-2 gap-2">
                   {(["Simplified", "Traditional"] as ScriptType[]).map((s) => (
-                    <Label key={s} className={`cursor-pointer rounded-md border p-2 text-center text-sm ${lang === 'en' ? 'whitespace-pre-line' : ''} ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <Label key={s} className={`cursor-pointer rounded-md border p-2 text-center text-sm ${script === s ? "border-primary bg-primary/5" : "border-border"}`}>
                       <RadioGroupItem value={s} className="sr-only" />
                       {s === "Simplified" ? t("script_simplified") : t("script_traditional")}
                     </Label>
                   ))}
-                  <Label className={`col-span-2 cursor-pointer rounded-md border p-2 text-center text-sm ${lang === 'en' ? 'whitespace-pre-line' : ''} ${script === "Bilingual" ? "border-primary bg-primary/5" : "border-border"}`}>
+                  <Label className={`col-span-2 cursor-pointer rounded-md border p-2 text-center text-sm ${script === "Bilingual" ? "border-primary bg-primary/5" : "border-border"}`}>
                     <RadioGroupItem value="Bilingual" className="sr-only" />
                     {t("script_bilingual")}
                   </Label>
