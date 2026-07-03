@@ -116,6 +116,7 @@ const dict = {
   },
   book_cover_label: { en: "Book Cover", zh: "封面图片" },
   upload_cover: { en: "Upload a photo", zh: "上传照片" },
+  take_picture: { en: "Take a picture", zh: "拍照" },
   change_cover: { en: "Change photo", zh: "更换照片" },
   remove_cover: { en: "Remove", zh: "移除" },
   cover_uploading: { en: "Uploading…", zh: "上传中…" },
