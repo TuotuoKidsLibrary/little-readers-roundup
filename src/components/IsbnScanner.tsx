@@ -128,16 +128,9 @@ export function IsbnScanner({ onDetected, onClose }: IsbnScannerProps) {
             try {
               const s = scannerRef.current;
               if (!s) return;
-              const capabilities = s.getRunningTrackCameraCapabilities?.();
-              if (capabilities?.torchFeature?.()?.isSupported?.()) {
-                await s.applyVideoConstraints({
-                  advanced: [{ torch: true } as any]
-                });
-              } else {
-                await s.applyVideoConstraints({
-                  advanced: [{ torch: true } as any]
-                });
-              }
+              await s.applyVideoConstraints({
+                advanced: [{ torch: true } as any],
+              });
             } catch {
               /* ignore torch constraint failures on unsupported mobile browsers */
             }
