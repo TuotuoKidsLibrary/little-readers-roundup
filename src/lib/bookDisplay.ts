@@ -1,5 +1,5 @@
-import type { Book } from "./types";
-import type { Lang } from "./i18n";
+import type { Book, ScriptType } from "./types";
+import type { Lang, TKey } from "./i18n";
 
 /**
  * `title` / `author` are always treated as the Chinese (original) fields.
@@ -22,4 +22,15 @@ export function getDisplayAuthor(book: Pick<Book, "author" | "author_en">, lang:
 /** True when a translated/English title or author was entered for this book. */
 export function hasEnglishInfo(book: Pick<Book, "title_en" | "author_en">): boolean {
   return Boolean(book.title_en?.trim() || book.author_en?.trim());
+}
+
+/**
+ * Maps a book's script_type to its i18n label key. Previously several call
+ * sites used `script_type === "Simplified" ? simplified : traditional`,
+ * which silently mislabeled "Bilingual" books as Traditional Chinese.
+ */
+export function getScriptTypeKey(scriptType: ScriptType): TKey {
+  if (scriptType === "Simplified") return "script_simplified";
+  if (scriptType === "Bilingual") return "script_bilingual";
+  return "script_traditional";
 }
