@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2 } from "lucide-react";
+import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
@@ -19,7 +19,7 @@ import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
-  const { addBook, updateBook, books } = useStore();
+  const { addBook, updateBook, books, uploadBookCover } = useStore();
   const { t, lang } = useI18n();
   const isEditing = !!bookToEdit;
   const contributionOptions: {
@@ -45,11 +45,15 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [age, setAge] = useState<AgeRange>(bookToEdit?.age_range ?? "3-5");
   const [price, setPrice] = useState(bookToEdit?.price?.toString() ?? "");
   const [scanning, setScanning] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached" | "editing">(
     isEditing ? "editing" : "idle"
   );
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const coverFileRef = useRef<HTMLInputElement>(null);
+  const coverObjectUrlRef = useRef<string | null>(null);
 
   const reset = () => {
     setStatus(bookToEdit?.status ?? "available");
@@ -58,12 +62,48 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setTitleEn(bookToEdit?.title_en ?? "");
     setAuthorEn(bookToEdit?.author_en ?? "");
     setIsbn(bookToEdit?.isbn ?? "");
+    if (coverObjectUrlRef.current) {
+      URL.revokeObjectURL(coverObjectUrlRef.current);
+      coverObjectUrlRef.current = null;
+    }
+    setCoverFile(null);
+    setUploadingCover(false);
     setCoverUrl(bookToEdit?.cover_url);
     setScript(bookToEdit?.script_type ?? "Simplified");
     setAge(bookToEdit?.age_range ?? "3-5");
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
     setLookupState(isEditing ? "editing" : "idle");
+  };
+
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error(lang === "en" ? "Please choose an image file." : "请选择图片文件。");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(lang === "en" ? "Image is too large (max 5MB)." : "图片过大（最大 5MB）。");
+      return;
+    }
+
+    if (coverObjectUrlRef.current) URL.revokeObjectURL(coverObjectUrlRef.current);
+    const previewUrl = URL.createObjectURL(file);
+    coverObjectUrlRef.current = previewUrl;
+    setCoverFile(file);
+    setCoverUrl(previewUrl);
+  };
+
+  const clearCover = () => {
+    if (coverObjectUrlRef.current) {
+      URL.revokeObjectURL(coverObjectUrlRef.current);
+      coverObjectUrlRef.current = null;
+    }
+    setCoverFile(null);
+    setCoverUrl(undefined);
   };
 
   const runLookup = async () => {
@@ -82,7 +122,14 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       setAuthorEn(cached.author_en ?? "");
       setScript(cached.script_type);
       setAge(cached.age_range);
-      if (cached.cover_url) setCoverUrl(cached.cover_url);
+      if (cached.cover_url) {
+        if (coverObjectUrlRef.current) {
+          URL.revokeObjectURL(coverObjectUrlRef.current);
+          coverObjectUrlRef.current = null;
+        }
+        setCoverFile(null);
+        setCoverUrl(cached.cover_url);
+      }
       setLookupState("cached");
       return;
     }
@@ -107,6 +154,11 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       if (entry && entry.title) {
         setTitle(entry.title);
         setAuthor(entry.authors?.[0]?.name ?? "");
+        if (coverObjectUrlRef.current) {
+          URL.revokeObjectURL(coverObjectUrlRef.current);
+          coverObjectUrlRef.current = null;
+        }
+        setCoverFile(null);
         setCoverUrl(`https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`);
         setLookupState("found");
         return;
@@ -127,7 +179,14 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
         setTitle(info.title);
         setAuthor(info.authors?.[0] ?? "");
         const img = info.imageLinks?.thumbnail?.replace("http:", "https:");
-        if (img) setCoverUrl(img);
+        if (img) {
+          if (coverObjectUrlRef.current) {
+            URL.revokeObjectURL(coverObjectUrlRef.current);
+            coverObjectUrlRef.current = null;
+          }
+          setCoverFile(null);
+          setCoverUrl(img);
+        }
         setLookupState("found");
         return;
       }
@@ -144,6 +203,20 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       return;
     }
 
+    let finalCoverUrl = coverUrl;
+    if (coverFile) {
+      setUploadingCover(true);
+      const { url, error: uploadError } = await uploadBookCover(coverFile);
+      setUploadingCover(false);
+      if (uploadError || !url) {
+        toast.error(lang === "en" ? "Couldn't upload cover photo." : "封面上传失败。", {
+          description: uploadError ?? undefined,
+        });
+        return;
+      }
+      finalCoverUrl = url;
+    }
+
     if (isEditing && bookToEdit) {
       const { error } = await updateBook(bookToEdit.id, {
         title: title.trim(),
@@ -155,7 +228,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
         age_range: age,
         status,
         price: status === "for_sale" ? Number(price) || 0 : undefined,
-        cover_url: coverUrl,
+        cover_url: finalCoverUrl,
       });
       if (error) {
         toast.error("Couldn't save changes.", { description: error });
@@ -173,7 +246,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
         age_range: age,
         status,
         price: status === "for_sale" ? Number(price) || 0 : undefined,
-        cover_url: coverUrl,
+        cover_url: finalCoverUrl,
       });
       toast.success(
         status === "donation"
@@ -198,6 +271,12 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const showDetails =
     lookupState === "found" || lookupState === "not_found" || lookupState === "cached" || lookupState === "editing";
   const loading = lookupState === "loading";
+
+  useEffect(() => {
+    return () => {
+      if (coverObjectUrlRef.current) URL.revokeObjectURL(coverObjectUrlRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (lookupState === "not_found") {
@@ -289,6 +368,55 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
               <p className="text-xs text-foreground/80 rounded-lg bg-accent/40 border border-accent p-2.5">
                 {t("isbn_not_found")}
               </p>
+            )}
+            {(lookupState === "not_found" || lookupState === "editing") && (
+              <div className="grid gap-1.5">
+                <Label className="text-xs text-muted-foreground">{t("book_cover_label")}</Label>
+                {lookupState === "not_found" && (
+                  <p className="text-[11px] text-muted-foreground">{t("cover_upload_hint")}</p>
+                )}
+                <input
+                  ref={coverFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleCoverFileChange}
+                />
+                <div className="flex items-center gap-3">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={title || "Book cover"}
+                      className="h-16 w-12 object-cover rounded-sm border border-border shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-16 w-12 rounded-sm border border-dashed border-border flex items-center justify-center text-muted-foreground shrink-0">
+                      <ImagePlus className="size-4" />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 rounded-full"
+                      onClick={() => coverFileRef.current?.click()}
+                    >
+                      <ImagePlus className="size-3.5" />
+                      {coverUrl ? t("change_cover") : t("upload_cover")}
+                    </Button>
+                    {coverFile && (
+                      <button
+                        type="button"
+                        onClick={clearCover}
+                        className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground w-fit"
+                      >
+                        <X className="size-3" /> {t("remove_cover")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
             {lookupState === "found" && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 flex gap-3 items-start">
@@ -439,8 +567,12 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
             >
               {t("cancel")}
             </Button>
-            <Button className="flex-1 rounded-full gap-2" onClick={saveBook}>
-              {isEditing ? (lang === "zh" ? "保存修改\u00a0\u00a0" : "Save Changes") : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
+            <Button className="flex-1 rounded-full gap-2" onClick={saveBook} disabled={uploadingCover}>
+              {uploadingCover ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> {t("cover_uploading")}
+                </>
+              ) : isEditing ? (lang === "zh" ? "保存修改\u00a0\u00a0" : "Save Changes") : status === "private" ? t("save_to_private_shelf") : t("confirm_add_book")}
             </Button>
           </div>
           </>
