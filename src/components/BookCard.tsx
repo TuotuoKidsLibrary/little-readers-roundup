@@ -4,7 +4,7 @@ import { BookCover } from "./BookCover";
 import { useI18n } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { Edit3 } from "lucide-react";
-import { getDisplayTitle, getDisplayAuthor } from "@/lib/bookDisplay";
+import { getDisplayTitle, getDisplayAuthor, getScriptTypeKey } from "@/lib/bookDisplay";
 
 interface BookCardProps {
   book: Book;
@@ -84,7 +84,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
         
         <div className="flex flex-wrap gap-1.5 pt-1.5">
           <Badge variant="secondary" className="text-[11px] font-normal px-2 py-0 text-muted-foreground bg-muted/60">
-            {book.script_type === "Simplified" ? t("script_simplified") : t("script_traditional")}
+            {t(getScriptTypeKey(book.script_type))}
           </Badge>
           {getStatusBadge()}
         </div>
