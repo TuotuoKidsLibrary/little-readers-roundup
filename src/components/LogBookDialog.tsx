@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2, ImagePlus, X } from "lucide-react";
+import { PlusCircle, BookOpen, Tag, Heart, ScanLine, Lock, Lightbulb, Loader2, ImagePlus, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
@@ -53,6 +53,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
+  const cameraFileRef = useRef<HTMLInputElement>(null);
   const coverObjectUrlRef = useRef<string | null>(null);
 
   const reset = () => {
@@ -382,6 +383,14 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                   className="hidden"
                   onChange={handleCoverFileChange}
                 />
+                <input
+                  ref={cameraFileRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleCoverFileChange}
+                />
                 <div className="flex items-center gap-3">
                   {coverUrl ? (
                     <img
@@ -395,16 +404,28 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                     </div>
                   )}
                   <div className="flex flex-col gap-1.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 rounded-full"
-                      onClick={() => coverFileRef.current?.click()}
-                    >
-                      <ImagePlus className="size-3.5" />
-                      {coverUrl ? t("change_cover") : t("upload_cover")}
-                    </Button>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 rounded-full"
+                        onClick={() => coverFileRef.current?.click()}
+                      >
+                        <ImagePlus className="size-3.5" />
+                        {coverUrl ? t("change_cover") : t("upload_cover")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 rounded-full"
+                        onClick={() => cameraFileRef.current?.click()}
+                      >
+                        <Camera className="size-3.5" />
+                        {t("take_picture")}
+                      </Button>
+                    </div>
                     {coverFile && (
                       <button
                         type="button"
