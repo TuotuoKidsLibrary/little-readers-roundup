@@ -11,7 +11,7 @@ import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BookCover } from "./BookCover";
 import { useI18n } from "@/lib/i18n";
-import { getDisplayTitle, getDisplayAuthor } from "@/lib/bookDisplay";
+import { getDisplayTitle, getDisplayAuthor, getScriptTypeKey } from "@/lib/bookDisplay";
 
 export function BookDetailSheet({
   book,
@@ -105,7 +105,7 @@ export function BookDetailSheet({
               <p className="text-xs text-muted-foreground">ISBN {book.isbn}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <Badge variant="secondary">
-                  {book.script_type === "Simplified" ? t("script_simplified") : t("script_traditional")}
+                  {t(getScriptTypeKey(book.script_type))}
                 </Badge>
                 <Badge variant="secondary">{t("age_range")}: {book.age_range}</Badge>
                 {book.price ? <Badge className="bg-primary text-primary-foreground">${book.price}</Badge> : null}
