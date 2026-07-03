@@ -11,6 +11,7 @@ import type {
 } from "./types";
 
 const GUEST_SAVED_KEY = "guest_saved_books_v1";
+const COVER_BUCKET = "book-covers";
 
 function loadGuestSavedBooks(): string[] {
   if (typeof window === "undefined") return [];
@@ -61,6 +62,7 @@ interface StoreCtx {
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
   toggleSaveBook: (id: string) => void;
   fetchBookMetadata: (isbn: string) => Promise<{ title: string; author: string } | null>;
+  uploadBookCover: (file: File) => Promise<{ url: string | null; error: string | null }>;
   deleteBook: (id: string) => Promise<{ error: string | null }>;
   unreadByThread: Record<string, number>;
   totalUnread: number;
@@ -418,6 +420,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
+  const uploadBookCover: StoreCtx["uploadBookCover"] = async (file) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { url: null, error: "Please log in to upload a cover photo." };
+
+    const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+    if (!file.type.startsWith("image/")) {
+      return { url: null, error: "Please choose an image file (JPG, PNG, WEBP, etc.)." };
+    }
+    if (file.size > MAX_BYTES) {
+      return { url: null, error: "Image is too large — please choose one under 5MB." };
+    }
+
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(COVER_BUCKET)
+      .upload(path, file, { upsert: false, contentType: file.type });
+
+    if (uploadError) {
+      console.error("Cover upload error:", uploadError);
+      return { url: null, error: uploadError.message };
+    }
+
+    const { data } = supabase.storage.from(COVER_BUCKET).getPublicUrl(path);
+    return { url: data.publicUrl, error: null };
+  };
+
   const toggleSaveBook = (id: string) => {
     const isSaved = savedBookIds.includes(id);
     setSavedBookIds((prev) =>
@@ -569,6 +599,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updateProfile,
         toggleSaveBook,
         fetchBookMetadata,
+        uploadBookCover,
         deleteBook,
         unreadByThread,
         totalUnread,
