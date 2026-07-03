@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { useEffect } from "react";
 import { supabase } from "./supabase";
+import { lookupBookByIsbn } from "./isbnLookup";
 import type {
   Book,
   BookRequest,
@@ -383,41 +384,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
-    const cleanIsbn = isbn.replace(/[- ]/g, "").trim();
-    if (!cleanIsbn) return null;
-
-    try {
-      const olUrl = `https://openlibrary.org/api/books?bibkeys=ISBN:${cleanIsbn}&format=json&jscmd=data`;
-      const olRes = await fetch(olUrl);
-      if (olRes.ok) {
-        const olData = await olRes.json();
-        const bookKey = `ISBN:${cleanIsbn}`;
-        if (olData && olData[bookKey]) {
-          const bookInfo = olData[bookKey];
-          return {
-            title: bookInfo.title || "Unknown Book",
-            author: bookInfo.authors?.[0]?.name || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { /* fallback hook */ }
-
-    try {
-      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanIsbn}`;
-      const gbRes = await fetch(gbUrl);
-      if (gbRes.ok) {
-        const gbData = await gbRes.json();
-        if (gbData && gbData.items && gbData.items.length > 0) {
-          const volumeInfo = gbData.items[0].volumeInfo;
-          return {
-            title: volumeInfo.title || "Unknown Book",
-            author: volumeInfo.authors?.[0] || "Unknown Author",
-          };
-        }
-      }
-    } catch (e) { console.error(e); }
-
-    return null;
+    const result = await lookupBookByIsbn(isbn);
+    return result ? { title: result.title, author: result.author } : null;
   };
 
   const uploadBookCover: StoreCtx["uploadBookCover"] = async (file) => {
