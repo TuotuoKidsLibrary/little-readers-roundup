@@ -17,6 +17,7 @@ import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
+import { lookupBookByIsbn, normalizeIsbn, isValidIsbn13 } from "@/lib/isbnLookup";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
   const { addBook, updateBook, books, uploadBookCover } = useStore();
@@ -55,6 +56,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const coverFileRef = useRef<HTMLInputElement>(null);
   const cameraFileRef = useRef<HTMLInputElement>(null);
   const coverObjectUrlRef = useRef<string | null>(null);
+  const lookupAbortRef = useRef<AbortController | null>(null);
 
   const reset = () => {
     setStatus(bookToEdit?.status ?? "available");
@@ -108,11 +110,24 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   };
 
   const runLookup = async () => {
-    const cleaned = isbn.trim();
-    if (!/^\d{13}$/.test(cleaned)) {
-      toast.error("Please enter a valid 13-digit ISBN.");
+    const cleaned = normalizeIsbn(isbn);
+    if (!isValidIsbn13(cleaned)) {
+      toast.error(
+        lang === "en"
+          ? "Please enter a valid 13-digit ISBN."
+          : "请输入有效的 13 位 ISBN。",
+      );
       return;
     }
+    // Keep the input showing the normalized form so future edits/comparisons are consistent
+    if (cleaned !== isbn) setIsbn(cleaned);
+
+    // Cancel any lookup still in flight for a previous ISBN so its result
+    // can't land late and silently overwrite what the user is looking at now.
+    lookupAbortRef.current?.abort();
+    const controller = new AbortController();
+    lookupAbortRef.current = controller;
+
     setLookupState("loading");
 
     const cached = books.find((b) => b.isbn === cleaned);
@@ -135,64 +150,23 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       return;
     }
 
-    const fetchWithTimeout = async (url: string, ms: number) => {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), ms);
-      try {
-        return await fetch(url, { signal: ctrl.signal });
-      } finally {
-        clearTimeout(timer);
-      }
-    };
+    const result = await lookupBookByIsbn(cleaned, controller.signal);
 
-    try {
-      const res = await fetchWithTimeout(
-        `https://openlibrary.org/api/books?bibkeys=ISBN:${cleaned}&jscmd=data&format=json`,
-        1500,
-      );
-      const json = (await res.json()) as Record<string, { title?: string; authors?: { name: string }[] }>;
-      const entry = json[`ISBN:${cleaned}`];
-      if (entry && entry.title) {
-        setTitle(entry.title);
-        setAuthor(entry.authors?.[0]?.name ?? "");
-        if (coverObjectUrlRef.current) {
-          URL.revokeObjectURL(coverObjectUrlRef.current);
-          coverObjectUrlRef.current = null;
-        }
-        setCoverFile(null);
-        setCoverUrl(`https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`);
-        setLookupState("found");
-        return;
-      }
-    } catch {
-      /* fall through to Google Books */
-    }
+    // Bail out silently if this request was superseded (aborted) or the
+    // component moved on (e.g. dialog closed / different ISBN entered).
+    if (controller.signal.aborted || lookupAbortRef.current !== controller) return;
 
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleaned}`,
-      );
-      const json = (await res.json()) as {
-        items?: { volumeInfo?: { title?: string; authors?: string[]; imageLinks?: { thumbnail?: string } } }[];
-      };
-      const info = json.items?.[0]?.volumeInfo;
-      if (info?.title) {
-        setTitle(info.title);
-        setAuthor(info.authors?.[0] ?? "");
-        const img = info.imageLinks?.thumbnail?.replace("http:", "https:");
-        if (img) {
-          if (coverObjectUrlRef.current) {
-            URL.revokeObjectURL(coverObjectUrlRef.current);
-            coverObjectUrlRef.current = null;
-          }
-          setCoverFile(null);
-          setCoverUrl(img);
-        }
-        setLookupState("found");
-        return;
+    if (result) {
+      setTitle(result.title);
+      setAuthor(result.author);
+      if (coverObjectUrlRef.current) {
+        URL.revokeObjectURL(coverObjectUrlRef.current);
+        coverObjectUrlRef.current = null;
       }
-    } catch {
-      /* fall through to not_found */
+      setCoverFile(null);
+      setCoverUrl(result.coverUrl);
+      setLookupState("found");
+      return;
     }
 
     setLookupState("not_found");
@@ -276,6 +250,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   useEffect(() => {
     return () => {
       if (coverObjectUrlRef.current) URL.revokeObjectURL(coverObjectUrlRef.current);
+      lookupAbortRef.current?.abort();
     };
   }, []);
 
@@ -340,11 +315,12 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                 value={isbn}
                 onChange={(e) => {
                   setIsbn(e.target.value);
+                  if (lookupState === "loading") lookupAbortRef.current?.abort();
                   if (lookupState !== "idle") setLookupState("idle");
                 }}
                 placeholder="978XXXXXXXXXX"
                 inputMode="numeric"
-                maxLength={13}
+                maxLength={17}
               />
             </div>
             {!showDetails && (
