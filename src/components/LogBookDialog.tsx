@@ -78,6 +78,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
     setLookupState(isEditing ? "editing" : "idle");
+    setLookupSource(null);
   };
 
   const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
