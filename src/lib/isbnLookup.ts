@@ -4,6 +4,8 @@
  * this logic (one inline in LogBookDialog, one unused in store.tsx).
  */
 
+import { lookupIsbnJisu } from "./isbnLookup.functions";
+
 export interface IsbnLookupResult {
   title: string;
   author: string;
@@ -112,6 +114,23 @@ export async function lookupBookByIsbn(
         title: info.title,
         author: info.authors?.[0] ?? "",
         coverUrl: img,
+      };
+    }
+  } catch {
+    /* fall through to jisuapi */
+  }
+
+  if (signal?.aborted) return null;
+
+  // jisuapi (server-side, better Simplified Chinese coverage)
+  try {
+    const result = await lookupIsbnJisu({ data: { isbn: cleaned } });
+    if (signal?.aborted) return null;
+    if (result?.title) {
+      return {
+        title: result.title,
+        author: result.author ?? "",
+        coverUrl: result.coverUrl,
       };
     }
   } catch {
