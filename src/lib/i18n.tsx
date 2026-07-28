@@ -140,6 +140,10 @@ const dict = {
     en: "Pulled from Open Library — confirm details below.",
     zh: "数据来自 Open Library — 请在下方确认信息。",
   },
+  pulled_from_source: {
+    en: "Pulled from {source} — confirm details below.",
+    zh: "数据来自 {source} — 请在下方确认信息。",
+  },
   select_sharing_option: { en: "Select Sharing Option", zh: "选择分享方式" },
   confirm_book_details: { en: "Confirm book details", zh: "确认绘本信息" },
   confirm_add_book: { en: "Confirm & Add Book", zh: "确认并添加绘本" },
