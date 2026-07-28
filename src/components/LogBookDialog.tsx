@@ -17,7 +17,7 @@ import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
-import { lookupBookByIsbn, normalizeIsbn, isValidIsbn13 } from "@/lib/isbnLookup";
+import { lookupBookByIsbn, normalizeIsbn, isValidIsbn13, isbnSourceLabels, type IsbnLookupSource } from "@/lib/isbnLookup";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
   const { addBook, updateBook, books, uploadBookCover } = useStore();
@@ -51,6 +51,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [lookupState, setLookupState] = useState<"idle" | "loading" | "found" | "not_found" | "cached" | "editing">(
     isEditing ? "editing" : "idle"
   );
+  const [lookupSource, setLookupSource] = useState<IsbnLookupSource | null>(null);
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
     setLookupState(isEditing ? "editing" : "idle");
+    setLookupSource(null);
   };
 
   const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,11 +167,13 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       }
       setCoverFile(null);
       setCoverUrl(result.coverUrl);
+      setLookupSource(result.source);
       setLookupState("found");
       return;
     }
 
     setLookupState("not_found");
+    setLookupSource(null);
   };
 
   const saveBook = async () => {
@@ -423,7 +427,12 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                 <div className="flex flex-col text-xs min-w-0">
                   <span className="font-serif font-bold text-sm break-words">{title}</span>
                   <span className="text-muted-foreground break-words">{author || "Unknown author"}</span>
-                  <span className="text-[10px] text-primary mt-1">{t("pulled_from_ol")}</span>
+                  <span className="text-[10px] text-primary mt-1">
+                    {t("pulled_from_source").replace(
+                      "{source}",
+                      lookupSource ? isbnSourceLabels[lookupSource][lang] : "—",
+                    )}
+                  </span>
                 </div>
               </div>
             )}

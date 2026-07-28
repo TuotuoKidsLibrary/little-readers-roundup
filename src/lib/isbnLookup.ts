@@ -10,7 +10,16 @@ export interface IsbnLookupResult {
   title: string;
   author: string;
   coverUrl?: string;
+  source: IsbnLookupSource;
 }
+
+export type IsbnLookupSource = "openlibrary" | "google" | "jisu";
+
+export const isbnSourceLabels: Record<IsbnLookupSource, { en: string; zh: string }> = {
+  openlibrary: { en: "Open Library", zh: "Open Library" },
+  google: { en: "Google Books", zh: "Google Books" },
+  jisu: { en: "Jisu (极速数据)", zh: "极速数据" },
+};
 
 /** Strips whitespace/dashes so pasted ISBNs like "978-7-020-04249-4" validate correctly. */
 export function normalizeIsbn(raw: string): string {
@@ -70,72 +79,87 @@ export async function lookupBookByIsbn(
   const cleaned = normalizeIsbn(isbn);
   if (!isValidIsbn13(cleaned)) return null;
 
-  // Open Library
-  try {
-    const res = await fetchWithTimeout(
-      `https://openlibrary.org/api/books?bibkeys=ISBN:${cleaned}&jscmd=data&format=json`,
-      4000,
-      signal,
-    );
-    if (signal?.aborted) return null;
-    const json = (await res.json()) as Record<string, { title?: string; authors?: { name: string }[] }>;
-    const entry = json[`ISBN:${cleaned}`];
-    if (entry?.title) {
+  // Run all three lookups in parallel so we can pick the most complete result
+  // (especially one that includes a cover image), instead of accepting the first
+  // source that returns any hit.
+  const openLibrary = (async (): Promise<IsbnLookupResult | null> => {
+    try {
+      const res = await fetchWithTimeout(
+        `https://openlibrary.org/api/books?bibkeys=ISBN:${cleaned}&jscmd=data&format=json`,
+        4000,
+        signal,
+      );
+      const json = (await res.json()) as Record<string, { title?: string; authors?: { name: string }[] }>;
+      const entry = json[`ISBN:${cleaned}`];
+      if (!entry?.title) return null;
       const candidateCover = `https://covers.openlibrary.org/b/isbn/${cleaned}-L.jpg`;
       const hasCover = await verifyCoverUrl(candidateCover);
-      if (signal?.aborted) return null;
       return {
         title: entry.title,
         author: entry.authors?.[0]?.name ?? "",
         coverUrl: hasCover ? candidateCover : undefined,
+        source: "openlibrary",
       };
+    } catch {
+      return null;
     }
-  } catch {
-    /* fall through to Google Books */
-  }
+  })();
 
-  if (signal?.aborted) return null;
-
-  // Google Books
-  try {
-    const res = await fetchWithTimeout(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleaned}`,
-      4000,
-      signal,
-    );
-    if (signal?.aborted) return null;
-    const json = (await res.json()) as {
-      items?: { volumeInfo?: { title?: string; authors?: string[]; imageLinks?: { thumbnail?: string } } }[];
-    };
-    const info = json.items?.[0]?.volumeInfo;
-    if (info?.title) {
-      const img = info.imageLinks?.thumbnail?.replace("http:", "https:");
+  const google = (async (): Promise<IsbnLookupResult | null> => {
+    try {
+      const res = await fetchWithTimeout(
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleaned}`,
+        4000,
+        signal,
+      );
+      const json = (await res.json()) as {
+        items?: { volumeInfo?: { title?: string; authors?: string[]; imageLinks?: { thumbnail?: string } } }[];
+      };
+      const info = json.items?.[0]?.volumeInfo;
+      if (!info?.title) return null;
       return {
         title: info.title,
         author: info.authors?.[0] ?? "",
-        coverUrl: img,
+        coverUrl: info.imageLinks?.thumbnail?.replace("http:", "https:"),
+        source: "google",
       };
+    } catch {
+      return null;
     }
-  } catch {
-    /* fall through to jisuapi */
-  }
+  })();
 
-  if (signal?.aborted) return null;
-
-  // jisuapi (server-side, better Simplified Chinese coverage)
-  try {
-    const result = await lookupIsbnJisu({ data: { isbn: cleaned } });
-    if (signal?.aborted) return null;
-    if (result?.title) {
+  const jisu = (async (): Promise<IsbnLookupResult | null> => {
+    try {
+      const result = await lookupIsbnJisu({ data: { isbn: cleaned } });
+      if (!result?.title) return null;
       return {
         title: result.title,
         author: result.author ?? "",
         coverUrl: result.coverUrl,
+        source: "jisu",
       };
+    } catch {
+      return null;
     }
-  } catch {
-    /* fall through to null (not found) */
-  }
+  })();
 
-  return null;
+  const results = (await Promise.all([openLibrary, google, jisu])).filter(
+    (r): r is IsbnLookupResult => !!r,
+  );
+
+  if (signal?.aborted || results.length === 0) return null;
+
+  // Score by completeness — cover is the most valuable field, then author.
+  // Ties fall back to source preference (Open Library → Google → Jisu).
+  const sourceRank: Record<IsbnLookupSource, number> = { openlibrary: 0, google: 1, jisu: 2 };
+  const score = (r: IsbnLookupResult) =>
+    (r.coverUrl ? 3 : 0) + (r.author?.trim() ? 1 : 0) + (r.title?.trim() ? 1 : 0);
+
+  results.sort((a, b) => {
+    const diff = score(b) - score(a);
+    if (diff !== 0) return diff;
+    return sourceRank[a.source] - sourceRank[b.source];
+  });
+
+  return results[0];
 }
