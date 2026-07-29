@@ -183,6 +183,11 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       return;
     }
 
+    if (ages.length === 0) {
+      toast.error(lang === "en" ? "Please select at least one age range." : "请至少选择一个适用年龄段。");
+      return;
+    }
+
     let finalCoverUrl = coverUrl;
     if (coverFile) {
       setUploadingCover(true);
