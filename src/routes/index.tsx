@@ -16,6 +16,7 @@ import { useI18n } from "@/lib/i18n";
 import { BookCard } from "@/components/BookCard";
 import { BookDetailSheet } from "@/components/BookDetailSheet";
 import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
+import { parseAgeRanges } from "@/lib/bookDisplay";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,7 +58,7 @@ function Index() {
       books.filter((b) => {
         if (b.status === "private") return false;
         if (script !== "all" && b.script_type !== script) return false;
-        if (age !== "all" && b.age_range !== age) return false;
+        if (age !== "all" && !parseAgeRanges(b.age_range).includes(age)) return false;
         if (status !== "all" && b.status !== status) return false;
         if (q.trim()) {
           const t = q.toLowerCase();
