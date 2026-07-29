@@ -17,6 +17,7 @@ import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import type { AgeRange, Book, BookStatus, ScriptType } from "@/lib/types";
 import { IsbnScanner } from "./IsbnScanner";
+import { parseAgeRanges } from "@/lib/bookDisplay";
 import { lookupBookByIsbn, normalizeIsbn, isValidIsbn13, isbnSourceLabels, type IsbnLookupSource } from "@/lib/isbnLookup";
 
 export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNode; bookToEdit?: Book }) {
@@ -43,7 +44,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [isbn, setIsbn] = useState(bookToEdit?.isbn ?? "");
   const [coverUrl, setCoverUrl] = useState<string | undefined>(bookToEdit?.cover_url);
   const [script, setScript] = useState<ScriptType>(bookToEdit?.script_type ?? "Simplified");
-  const [age, setAge] = useState<AgeRange>(bookToEdit?.age_range ?? "3-5");
+  const [ages, setAges] = useState<string[]>(parseAgeRanges(bookToEdit?.age_range) || []);
   const [price, setPrice] = useState(bookToEdit?.price?.toString() ?? "");
   const [scanning, setScanning] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -74,7 +75,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setUploadingCover(false);
     setCoverUrl(bookToEdit?.cover_url);
     setScript(bookToEdit?.script_type ?? "Simplified");
-    setAge(bookToEdit?.age_range ?? "3-5");
+    setAges(parseAgeRanges(bookToEdit?.age_range));
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
     setLookupState(isEditing ? "editing" : "idle");
@@ -139,7 +140,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       setTitleEn(cached.title_en ?? "");
       setAuthorEn(cached.author_en ?? "");
       setScript(cached.script_type);
-      setAge(cached.age_range);
+      setAges(parseAgeRanges(cached.age_range));
       if (cached.cover_url) {
         if (coverObjectUrlRef.current) {
           URL.revokeObjectURL(coverObjectUrlRef.current);
@@ -182,6 +183,11 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       return;
     }
 
+    if (ages.length === 0) {
+      toast.error(lang === "en" ? "Please select at least one age range." : "请至少选择一个适用年龄段。");
+      return;
+    }
+
     let finalCoverUrl = coverUrl;
     if (coverFile) {
       setUploadingCover(true);
@@ -204,7 +210,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
         author_en: authorEn.trim() || undefined,
         isbn: isbn.trim() || "—",
         script_type: script,
-        age_range: age,
+        age_range: ages.join(","),
         status,
         price: status === "for_sale" ? Number(price) || 0 : undefined,
         cover_url: finalCoverUrl,
@@ -222,7 +228,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
         author_en: authorEn.trim() || undefined,
         isbn: isbn.trim() || "—",
         script_type: script,
-        age_range: age,
+        age_range: ages.join(","),
         status,
         price: status === "for_sale" ? Number(price) || 0 : undefined,
         cover_url: finalCoverUrl,
@@ -549,15 +555,30 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
                 </RadioGroup>
               </div>
               <div className="grid gap-1.5">
-                <Label>{t("age_range")}</Label>
-                <RadioGroup value={age} onValueChange={(v) => setAge(v as AgeRange)} className="flex gap-2">
-                  {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => (
-                    <Label key={a} className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm ${lang === 'en' ? 'whitespace-pre-line' : ''} ${age === a ? "border-primary bg-primary/5" : "border-border"}`}>
-                      <RadioGroupItem value={a} className="sr-only" />
-                      {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
-                    </Label>
-                  ))}
-                </RadioGroup>
+                <Label>
+                  {t("age_range")}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    {lang === "en" ? "(select all that apply)" : "（可多选）"}
+                  </span>
+                </Label>
+                <div className="flex gap-2">
+                  {(["0-2", "3-5", "6+"] as AgeRange[]).map((a) => {
+                    const checked = ages.includes(a);
+                    return (
+                      <button
+                        type="button"
+                        key={a}
+                        aria-pressed={checked}
+                        onClick={() =>
+                          setAges((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
+                        }
+                        className={`flex-1 cursor-pointer rounded-md border p-2 text-center text-sm ${lang === "en" ? "whitespace-pre-line" : ""} ${checked ? "border-primary bg-primary/5" : "border-border"}`}
+                      >
+                        {a === "0-2" ? t("age_0_2") : a === "3-5" ? t("age_3_5") : t("age_6_plus")}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

@@ -34,3 +34,16 @@ export function getScriptTypeKey(scriptType: ScriptType): TKey {
   if (scriptType === "Bilingual") return "script_bilingual";
   return "script_traditional";
 }
+
+/** Books can cover several age ranges; they are stored comma-separated. */
+export function parseAgeRanges(value: string | undefined | null): string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+export function formatAgeRanges(value: string | undefined | null): string {
+  return parseAgeRanges(value).join(" · ");
+}

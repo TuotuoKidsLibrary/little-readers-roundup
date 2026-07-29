@@ -11,7 +11,8 @@ export interface Book {
   author_en?: string;
   isbn: string;
   script_type: ScriptType;
-  age_range: AgeRange;
+  /** One or more age ranges, stored comma-separated (e.g. "0-2,3-5"). */
+  age_range: string;
   price?: number;
   status: BookStatus;
   owner_id: string;
