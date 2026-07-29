@@ -11,7 +11,7 @@ import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { BookCover } from "./BookCover";
 import { useI18n } from "@/lib/i18n";
-import { getDisplayTitle, getDisplayAuthor, getScriptTypeKey } from "@/lib/bookDisplay";
+import { getDisplayTitle, getDisplayAuthor, getScriptTypeKey, formatAgeRanges } from "@/lib/bookDisplay";
 
 export function BookDetailSheet({
   book,
@@ -107,7 +107,7 @@ export function BookDetailSheet({
                 <Badge variant="secondary">
                   {t(getScriptTypeKey(book.script_type))}
                 </Badge>
-                <Badge variant="secondary">{t("age_range")}: {book.age_range}</Badge>
+                <Badge variant="secondary">{t("age_range")}: {formatAgeRanges(book.age_range)}</Badge>
                 {book.price ? <Badge className="bg-primary text-primary-foreground">${book.price}</Badge> : null}
               </div>
             </div>
