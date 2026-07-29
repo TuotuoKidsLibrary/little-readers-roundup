@@ -43,7 +43,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
   const [isbn, setIsbn] = useState(bookToEdit?.isbn ?? "");
   const [coverUrl, setCoverUrl] = useState<string | undefined>(bookToEdit?.cover_url);
   const [script, setScript] = useState<ScriptType>(bookToEdit?.script_type ?? "Simplified");
-  const [age, setAge] = useState<AgeRange>(bookToEdit?.age_range ?? "3-5");
+  const [ages, setAges] = useState<string[]>(parseAgeRanges(bookToEdit?.age_range) || []);
   const [price, setPrice] = useState(bookToEdit?.price?.toString() ?? "");
   const [scanning, setScanning] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -74,7 +74,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
     setUploadingCover(false);
     setCoverUrl(bookToEdit?.cover_url);
     setScript(bookToEdit?.script_type ?? "Simplified");
-    setAge(bookToEdit?.age_range ?? "3-5");
+    setAges(parseAgeRanges(bookToEdit?.age_range));
     setPrice(bookToEdit?.price?.toString() ?? "");
     setScanning(false);
     setLookupState(isEditing ? "editing" : "idle");
@@ -139,7 +139,7 @@ export function LogBookDialog({ trigger, bookToEdit }: { trigger?: React.ReactNo
       setTitleEn(cached.title_en ?? "");
       setAuthorEn(cached.author_en ?? "");
       setScript(cached.script_type);
-      setAge(cached.age_range);
+      setAges(parseAgeRanges(cached.age_range));
       if (cached.cover_url) {
         if (coverObjectUrlRef.current) {
           URL.revokeObjectURL(coverObjectUrlRef.current);
