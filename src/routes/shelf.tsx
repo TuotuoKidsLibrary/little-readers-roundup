@@ -287,7 +287,7 @@ function ShelfFilterBar({
 }: {
   filters: BookFilterState;
   onChange: (f: BookFilterState) => void;
-  extra?: React.ReactNode;
+  extra?: ReactNode;
 }) {
   const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
@@ -454,7 +454,7 @@ function BatchEditBar({
   );
 }
 
-function BatchRow({ label, children }: { label: string; children: React.ReactNode }) {
+function BatchRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{label}</p>
@@ -468,7 +468,7 @@ function BatchChip({
   disabled,
   onClick,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   disabled: boolean;
   onClick: () => void;
 }) {
