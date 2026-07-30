@@ -277,6 +277,214 @@ function ShelfPage() {
 }
 
 function MessagesPanel() {
+  return <MessagesPanelInner />;
+}
+
+function ShelfFilterBar({
+  filters,
+  onChange,
+  extra,
+}: {
+  filters: BookFilterState;
+  onChange: (f: BookFilterState) => void;
+  extra?: React.ReactNode;
+}) {
+  const { t, lang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const active =
+    filters.script !== "all" || filters.age !== "all" || filters.status !== "all";
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={filters.q}
+            onChange={(e) => onChange({ ...filters, q: e.target.value })}
+            placeholder={t("search_placeholder")}
+            className="pl-9 rounded-full bg-card"
+          />
+        </div>
+        <Button
+          variant={active ? "default" : "outline"}
+          size="sm"
+          className="rounded-full gap-1.5 shrink-0"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <SlidersHorizontal className="size-4" />
+          <span className="hidden sm:inline">{t("filter_books")}</span>
+        </Button>
+        {extra}
+      </div>
+
+      {open && (
+        <div className="mt-3 rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-4">
+          <FilterGroup
+            label={t("script_type")}
+            value={filters.script}
+            options={[
+              { v: "all", l: t("filters_all") },
+              { v: "Simplified", l: t("script_simplified") },
+              { v: "Traditional", l: t("script_traditional") },
+              { v: "Bilingual", l: t("script_bilingual") },
+            ]}
+            onChange={(v) => onChange({ ...filters, script: v as BookFilterState["script"] })}
+          />
+          <FilterGroup
+            label={t("age_range")}
+            value={filters.age}
+            options={[
+              { v: "all", l: t("filters_all_ages") },
+              { v: "0-2", l: lang === "en" ? "0–2" : "0-2 岁" },
+              { v: "3-5", l: lang === "en" ? "3–5" : "3-5 岁" },
+              { v: "6+", l: lang === "en" ? "6+" : "6 岁以上" },
+            ]}
+            onChange={(v) => onChange({ ...filters, age: v as BookFilterState["age"] })}
+          />
+          <FilterGroup
+            label={t("book_status")}
+            value={filters.status}
+            options={[
+              { v: "all", l: t("filters_all") },
+              { v: "available", l: t("status_available") },
+              { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
+              { v: "donation", l: lang === "en" ? "Donated" : "爱心捐赠" },
+              { v: "private", l: lang === "en" ? "Private" : "私密收藏" },
+              { v: "reserved", l: lang === "en" ? "Reserved" : "已被预约" },
+            ]}
+            onChange={(v) => onChange({ ...filters, status: v as BookFilterState["status"] })}
+          />
+          <div>
+            <Button variant="ghost" size="sm" className="rounded-full" onClick={() => onChange(emptyBookFilters)}>
+              {t("clear_selection")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BatchEditBar({
+  count,
+  saving,
+  onSelectAll,
+  onClear,
+  onPatch,
+  onDelete,
+}: {
+  count: number;
+  saving: boolean;
+  onSelectAll: () => void;
+  onClear: () => void;
+  onPatch: (patch: Partial<Book>) => void;
+  onDelete: () => void;
+}) {
+  const { t, lang } = useI18n();
+  const disabled = count === 0 || saving;
+
+  return (
+    <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-sm font-medium flex-1">
+          {saving
+            ? t("batch_saving")
+            : lang === "en"
+              ? `${count} selected`
+              : `已选 ${count} 本`}
+        </p>
+        <Button variant="outline" size="sm" className="rounded-full" onClick={onSelectAll}>
+          {t("select_all")}
+        </Button>
+        <Button variant="ghost" size="sm" className="rounded-full" onClick={onClear}>
+          {t("clear_selection")}
+        </Button>
+      </div>
+
+      <BatchRow label={t("batch_set_status")}>
+        {([
+          ["available", lang === "en" ? "Available" : "可借阅"],
+          ["for_sale", lang === "en" ? "For Sale" : "可出售"],
+          ["donation", lang === "en" ? "Donated" : "爱心捐赠"],
+          ["private", lang === "en" ? "Private" : "私密收藏"],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ status: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <BatchRow label={t("batch_set_script")}>
+        {([
+          ["Simplified", t("script_simplified")],
+          ["Traditional", t("script_traditional")],
+          ["Bilingual", t("script_bilingual")],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ script_type: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <BatchRow label={t("batch_set_age")}>
+        {([
+          ["0-2", lang === "en" ? "0–2" : "0-2 岁"],
+          ["3-5", lang === "en" ? "3–5" : "3-5 岁"],
+          ["6+", lang === "en" ? "6+" : "6 岁以上"],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ age_range: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full gap-1.5 border-red-200 text-red-600 hover:bg-red-50"
+          disabled={disabled}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" /> {t("delete_selected")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BatchRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+function BatchChip({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="rounded-full border border-border bg-background px-3 py-1 text-xs hover:bg-muted disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function MessagesPanelInner() {
   const { threads, messages, requests, user, sendMessage, isAuthenticated, unreadByThread, markThreadRead } = useStore();
   const { t } = useI18n();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
