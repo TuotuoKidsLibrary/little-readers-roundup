@@ -232,7 +232,7 @@ const dict = {
     zh: "暂无消息 — 打个招呼，安排一下交换事宜吧。",
   },
   write_message_placeholder: { en: "Write a message…", zh: "输入消息…" },
-  filter_books: { en: "Filter books", zh: "筛选图书" },
+  filter_books: { en: "Filter Books", zh: "筛选图书" },
   filters_all: { en: "All", zh: "全部" },
   filters_all_ages: { en: "All ages", zh: "全部年龄" },
   book_status: { en: "Book Status", zh: "图书状态" },
