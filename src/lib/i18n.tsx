@@ -238,7 +238,7 @@ const dict = {
   book_status: { en: "Book Status", zh: "图书状态" },
   status_available: { en: "Available", zh: "可借阅" },
   no_books_match: { en: "No books match these filters.", zh: "暂无符合筛选条件的绘本。" },
-  batch_edit: { en: "Batch edit", zh: "批量编辑" },
+  batch_edit: { en: "Batch Edit", zh: "批量编辑" },
   batch_done: { en: "Done", zh: "完成" },
   select_all: { en: "Select all", zh: "全选" },
   clear_selection: { en: "Clear", zh: "清除选择" },
