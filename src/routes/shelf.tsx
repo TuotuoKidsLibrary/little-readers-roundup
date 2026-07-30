@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,16 @@ import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { LogBookDialog } from "@/components/LogBookDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
-import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart, Trash2, PackageCheck } from "lucide-react";
+import {
+  Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart, Trash2, PackageCheck,
+  Search, SlidersHorizontal, CheckSquare, Square, ListChecks,
+} from "lucide-react";
+import {
+  applyBookFilters,
+  emptyBookFilters,
+  FilterGroup,
+  type BookFilterState,
+} from "@/components/BookFilters";
 
 export const Route = createFileRoute("/shelf")({
   head: () => ({
@@ -26,8 +35,13 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook, deleteBook, totalUnread } = useStore();
-  const { t } = useI18n();
+  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook, deleteBook, updateBook, totalUnread } = useStore();
+  const { t, lang } = useI18n();
+  const [contribFilters, setContribFilters] = useState<BookFilterState>(emptyBookFilters);
+  const [favFilters, setFavFilters] = useState<BookFilterState>(emptyBookFilters);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchSaving, setBatchSaving] = useState(false);
   const mine = useMemo(
     () => (isAuthenticated ? books.filter((b) => b.owner_id === user.id) : []),
     [books, user.id, isAuthenticated],
@@ -36,8 +50,29 @@ function ShelfPage() {
     () => books.filter((b) => savedBookIds.includes(b.id)),
     [books, savedBookIds],
   );
+  const mineFiltered = useMemo(() => applyBookFilters(mine, contribFilters), [mine, contribFilters]);
+  const favFiltered = useMemo(() => applyBookFilters(favorites, favFilters), [favorites, favFilters]);
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
   const [selected, setSelected] = useState<Book | null>(null);
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const runBatch = async (patch: Partial<Book>) => {
+    if (selectedIds.length === 0) return;
+    setBatchSaving(true);
+    for (const id of selectedIds) await updateBook(id, patch);
+    setBatchSaving(false);
+  };
+
+  const runBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(t("batch_delete_confirm"))) return;
+    setBatchSaving(true);
+    for (const id of selectedIds) await deleteBook(id);
+    setBatchSaving(false);
+    setSelectedIds([]);
+  };
 
   const activity = useMemo(
     () =>
@@ -98,12 +133,66 @@ function ShelfPage() {
             <StatCard label={t("total_contributed")} value={mine.length} Icon={BookOpen} />
             <StatCard label={t("active_loans")} value={activeLoans} Icon={Activity} />
           </div>
+
+          <ShelfFilterBar
+            filters={contribFilters}
+            onChange={setContribFilters}
+            extra={
+              mine.length > 0 && (
+                <Button
+                  variant={batchMode ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full gap-1.5 shrink-0"
+                  onClick={() => {
+                    setBatchMode((v) => !v);
+                    setSelectedIds([]);
+                  }}
+                >
+                  <ListChecks className="size-4" />
+                  {batchMode ? t("batch_done") : t("batch_edit")}
+                </Button>
+              )
+            }
+          />
+
+          {batchMode && (
+            <BatchEditBar
+              count={selectedIds.length}
+              saving={batchSaving}
+              onSelectAll={() => setSelectedIds(mineFiltered.map((b) => b.id))}
+              onClear={() => setSelectedIds([])}
+              onPatch={runBatch}
+              onDelete={runBatchDelete}
+            />
+          )}
+
           {mine.length === 0 ? (
             <EmptyState text={t("shelf_empty")} />
+          ) : mineFiltered.length === 0 ? (
+            <EmptyState text={t("no_books_match")} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {mine.map((b) => (
+              {mineFiltered.map((b) => (
                 <div key={b.id} className="relative group">
+                  {batchMode ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelected(b.id)}
+                      className={`w-full text-left rounded-2xl transition-all ${
+                        selectedIds.includes(b.id) ? "ring-2 ring-primary" : ""
+                      }`}
+                    >
+                      <BookCard book={b} />
+                      <span className="absolute top-3 right-3 text-primary">
+                        {selectedIds.includes(b.id) ? (
+                          <CheckSquare className="size-5" />
+                        ) : (
+                          <Square className="size-5 text-muted-foreground" />
+                        )}
+                      </span>
+                    </button>
+                  ) : (
+                    <>
                   <LogBookDialog
                     bookToEdit={b}
                     trigger={
@@ -126,6 +215,8 @@ function ShelfPage() {
                   >
                     <Trash2 className="size-4" />
                   </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -133,11 +224,14 @@ function ShelfPage() {
         </TabsContent>
 
         <TabsContent value="fav" className="pt-5">
+          <ShelfFilterBar filters={favFilters} onChange={setFavFilters} />
           {favorites.length === 0 ? (
             <EmptyState text={t("favorites_empty")} />
+          ) : favFiltered.length === 0 ? (
+            <EmptyState text={t("no_books_match")} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {favorites.map((b) => (
+              {favFiltered.map((b) => (
                 <div key={b.id} className="relative group">
                   <button
                     type="button"
@@ -183,6 +277,214 @@ function ShelfPage() {
 }
 
 function MessagesPanel() {
+  return <MessagesPanelInner />;
+}
+
+function ShelfFilterBar({
+  filters,
+  onChange,
+  extra,
+}: {
+  filters: BookFilterState;
+  onChange: (f: BookFilterState) => void;
+  extra?: ReactNode;
+}) {
+  const { t, lang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const active =
+    filters.script !== "all" || filters.age !== "all" || filters.status !== "all";
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={filters.q}
+            onChange={(e) => onChange({ ...filters, q: e.target.value })}
+            placeholder={t("search_placeholder")}
+            className="pl-9 rounded-full bg-card"
+          />
+        </div>
+        <Button
+          variant={active ? "default" : "outline"}
+          size="sm"
+          className="rounded-full gap-1.5 shrink-0"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <SlidersHorizontal className="size-4" />
+          <span className="hidden sm:inline">{t("filter_books")}</span>
+        </Button>
+        {extra}
+      </div>
+
+      {open && (
+        <div className="mt-3 rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-4">
+          <FilterGroup
+            label={t("script_type")}
+            value={filters.script}
+            options={[
+              { v: "all", l: t("filters_all") },
+              { v: "Simplified", l: t("script_simplified") },
+              { v: "Traditional", l: t("script_traditional") },
+              { v: "Bilingual", l: t("script_bilingual") },
+            ]}
+            onChange={(v) => onChange({ ...filters, script: v as BookFilterState["script"] })}
+          />
+          <FilterGroup
+            label={t("age_range")}
+            value={filters.age}
+            options={[
+              { v: "all", l: t("filters_all_ages") },
+              { v: "0-2", l: lang === "en" ? "0–2" : "0-2 岁" },
+              { v: "3-5", l: lang === "en" ? "3–5" : "3-5 岁" },
+              { v: "6+", l: lang === "en" ? "6+" : "6 岁以上" },
+            ]}
+            onChange={(v) => onChange({ ...filters, age: v as BookFilterState["age"] })}
+          />
+          <FilterGroup
+            label={t("book_status")}
+            value={filters.status}
+            options={[
+              { v: "all", l: t("filters_all") },
+              { v: "available", l: t("status_available") },
+              { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
+              { v: "donation", l: lang === "en" ? "Donated" : "爱心捐赠" },
+              { v: "private", l: lang === "en" ? "Private" : "私密收藏" },
+              { v: "reserved", l: lang === "en" ? "Reserved" : "已被预约" },
+            ]}
+            onChange={(v) => onChange({ ...filters, status: v as BookFilterState["status"] })}
+          />
+          <div>
+            <Button variant="ghost" size="sm" className="rounded-full" onClick={() => onChange(emptyBookFilters)}>
+              {t("clear_selection")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BatchEditBar({
+  count,
+  saving,
+  onSelectAll,
+  onClear,
+  onPatch,
+  onDelete,
+}: {
+  count: number;
+  saving: boolean;
+  onSelectAll: () => void;
+  onClear: () => void;
+  onPatch: (patch: Partial<Book>) => void;
+  onDelete: () => void;
+}) {
+  const { t, lang } = useI18n();
+  const disabled = count === 0 || saving;
+
+  return (
+    <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-sm font-medium flex-1">
+          {saving
+            ? t("batch_saving")
+            : lang === "en"
+              ? `${count} selected`
+              : `已选 ${count} 本`}
+        </p>
+        <Button variant="outline" size="sm" className="rounded-full" onClick={onSelectAll}>
+          {t("select_all")}
+        </Button>
+        <Button variant="ghost" size="sm" className="rounded-full" onClick={onClear}>
+          {t("clear_selection")}
+        </Button>
+      </div>
+
+      <BatchRow label={t("batch_set_status")}>
+        {([
+          ["available", lang === "en" ? "Available" : "可借阅"],
+          ["for_sale", lang === "en" ? "For Sale" : "可出售"],
+          ["donation", lang === "en" ? "Donated" : "爱心捐赠"],
+          ["private", lang === "en" ? "Private" : "私密收藏"],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ status: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <BatchRow label={t("batch_set_script")}>
+        {([
+          ["Simplified", t("script_simplified")],
+          ["Traditional", t("script_traditional")],
+          ["Bilingual", t("script_bilingual")],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ script_type: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <BatchRow label={t("batch_set_age")}>
+        {([
+          ["0-2", lang === "en" ? "0–2" : "0-2 岁"],
+          ["3-5", lang === "en" ? "3–5" : "3-5 岁"],
+          ["6+", lang === "en" ? "6+" : "6 岁以上"],
+        ] as const).map(([v, l]) => (
+          <BatchChip key={v} disabled={disabled} onClick={() => onPatch({ age_range: v })}>
+            {l}
+          </BatchChip>
+        ))}
+      </BatchRow>
+
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full gap-1.5 border-red-200 text-red-600 hover:bg-red-50"
+          disabled={disabled}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" /> {t("delete_selected")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BatchRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+function BatchChip({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: ReactNode;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="rounded-full border border-border bg-background px-3 py-1 text-xs hover:bg-muted disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function MessagesPanelInner() {
   const { threads, messages, requests, user, sendMessage, isAuthenticated, unreadByThread, markThreadRead } = useStore();
   const { t } = useI18n();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
