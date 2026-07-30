@@ -13,7 +13,16 @@ import { BookDetailSheet } from "@/components/BookDetailSheet";
 import { LogBookDialog } from "@/components/LogBookDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import type { Book } from "@/lib/types";
-import { Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart, Trash2, PackageCheck } from "lucide-react";
+import {
+  Send, BookOpen, Activity, MessageSquare, History, CheckCircle, XCircle, Heart, Trash2, PackageCheck,
+  Search, SlidersHorizontal, CheckSquare, Square, ListChecks,
+} from "lucide-react";
+import {
+  applyBookFilters,
+  emptyBookFilters,
+  FilterGroup,
+  type BookFilterState,
+} from "@/components/BookFilters";
 
 export const Route = createFileRoute("/shelf")({
   head: () => ({
@@ -26,8 +35,13 @@ export const Route = createFileRoute("/shelf")({
 });
 
 function ShelfPage() {
-  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook, deleteBook, totalUnread } = useStore();
-  const { t } = useI18n();
+  const { books, requests, user, isAuthenticated, savedBookIds, toggleSaveBook, deleteBook, updateBook, totalUnread } = useStore();
+  const { t, lang } = useI18n();
+  const [contribFilters, setContribFilters] = useState<BookFilterState>(emptyBookFilters);
+  const [favFilters, setFavFilters] = useState<BookFilterState>(emptyBookFilters);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchSaving, setBatchSaving] = useState(false);
   const mine = useMemo(
     () => (isAuthenticated ? books.filter((b) => b.owner_id === user.id) : []),
     [books, user.id, isAuthenticated],
@@ -36,8 +50,29 @@ function ShelfPage() {
     () => books.filter((b) => savedBookIds.includes(b.id)),
     [books, savedBookIds],
   );
+  const mineFiltered = useMemo(() => applyBookFilters(mine, contribFilters), [mine, contribFilters]);
+  const favFiltered = useMemo(() => applyBookFilters(favorites, favFilters), [favorites, favFilters]);
   const activeLoans = mine.filter((b) => b.status === "reserved").length;
   const [selected, setSelected] = useState<Book | null>(null);
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const runBatch = async (patch: Partial<Book>) => {
+    if (selectedIds.length === 0) return;
+    setBatchSaving(true);
+    for (const id of selectedIds) await updateBook(id, patch);
+    setBatchSaving(false);
+  };
+
+  const runBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(t("batch_delete_confirm"))) return;
+    setBatchSaving(true);
+    for (const id of selectedIds) await deleteBook(id);
+    setBatchSaving(false);
+    setSelectedIds([]);
+  };
 
   const activity = useMemo(
     () =>
@@ -98,12 +133,66 @@ function ShelfPage() {
             <StatCard label={t("total_contributed")} value={mine.length} Icon={BookOpen} />
             <StatCard label={t("active_loans")} value={activeLoans} Icon={Activity} />
           </div>
+
+          <ShelfFilterBar
+            filters={contribFilters}
+            onChange={setContribFilters}
+            extra={
+              mine.length > 0 && (
+                <Button
+                  variant={batchMode ? "default" : "outline"}
+                  size="sm"
+                  className="rounded-full gap-1.5 shrink-0"
+                  onClick={() => {
+                    setBatchMode((v) => !v);
+                    setSelectedIds([]);
+                  }}
+                >
+                  <ListChecks className="size-4" />
+                  {batchMode ? t("batch_done") : t("batch_edit")}
+                </Button>
+              )
+            }
+          />
+
+          {batchMode && (
+            <BatchEditBar
+              count={selectedIds.length}
+              saving={batchSaving}
+              onSelectAll={() => setSelectedIds(mineFiltered.map((b) => b.id))}
+              onClear={() => setSelectedIds([])}
+              onPatch={runBatch}
+              onDelete={runBatchDelete}
+            />
+          )}
+
           {mine.length === 0 ? (
             <EmptyState text={t("shelf_empty")} />
+          ) : mineFiltered.length === 0 ? (
+            <EmptyState text={t("no_books_match")} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {mine.map((b) => (
+              {mineFiltered.map((b) => (
                 <div key={b.id} className="relative group">
+                  {batchMode ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleSelected(b.id)}
+                      className={`w-full text-left rounded-2xl transition-all ${
+                        selectedIds.includes(b.id) ? "ring-2 ring-primary" : ""
+                      }`}
+                    >
+                      <BookCard book={b} />
+                      <span className="absolute top-3 right-3 text-primary">
+                        {selectedIds.includes(b.id) ? (
+                          <CheckSquare className="size-5" />
+                        ) : (
+                          <Square className="size-5 text-muted-foreground" />
+                        )}
+                      </span>
+                    </button>
+                  ) : (
+                    <>
                   <LogBookDialog
                     bookToEdit={b}
                     trigger={
@@ -126,6 +215,8 @@ function ShelfPage() {
                   >
                     <Trash2 className="size-4" />
                   </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -133,11 +224,14 @@ function ShelfPage() {
         </TabsContent>
 
         <TabsContent value="fav" className="pt-5">
+          <ShelfFilterBar filters={favFilters} onChange={setFavFilters} />
           {favorites.length === 0 ? (
             <EmptyState text={t("favorites_empty")} />
+          ) : favFiltered.length === 0 ? (
+            <EmptyState text={t("no_books_match")} />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {favorites.map((b) => (
+              {favFiltered.map((b) => (
                 <div key={b.id} className="relative group">
                   <button
                     type="button"
