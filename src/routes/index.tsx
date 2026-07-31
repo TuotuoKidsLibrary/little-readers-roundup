@@ -146,7 +146,7 @@ function Index() {
           </SheetTrigger>
           <SheetContent side="left" className="bg-card">
             <SheetHeader>
-              <SheetTitle className="font-sans font-bold">{lang === "en" ? "Filter books" : "筛选图书"}</SheetTitle>
+              <SheetTitle className="font-sans font-bold">{t("filter_books")}</SheetTitle>
             </SheetHeader>
             <div className="px-4 pb-6 mt-4">{filters}</div>
           </SheetContent>
