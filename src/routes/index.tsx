@@ -49,7 +49,7 @@ function Index() {
   const { t, lang } = useI18n();
   const [q, setQ] = useState("");
   const [script, setScript] = useState<ScriptType | "all">("all");
-  const [age, setAge] = useState<AgeRange | "all">("all");
+  const [ages, setAges] = useState<AgeRange[]>([]);
   const [statuses, setStatuses] = useState<BookStatus[]>([]);
   const [selected, setSelected] = useState<Book | null>(null);
 
@@ -58,7 +58,10 @@ function Index() {
       books.filter((b) => {
         if (b.status === "private") return false;
         if (script !== "all" && b.script_type !== script) return false;
-        if (age !== "all" && !parseAgeRanges(b.age_range).includes(age)) return false;
+        if (ages.length > 0) {
+          const bookAges = parseAgeRanges(b.age_range);
+          if (!ages.some((a) => bookAges.includes(a))) return false;
+        }
         if (statuses.length > 0 && !statuses.includes(b.status)) return false;
         if (q.trim()) {
           const t = q.toLowerCase();
@@ -72,7 +75,7 @@ function Index() {
         }
         return true;
       }),
-    [books, q, script, age, statuses],
+    [books, q, script, ages, statuses],
   );
 
   const filters = (
@@ -88,16 +91,19 @@ function Index() {
         ]}
         onChange={(v) => setScript(v as ScriptType | "all")}
       />
-      <FilterGroup
+      <MultiFilterGroup
         label={t("age_range")}
-        value={age}
+        values={ages}
+        allLabel={lang === "en" ? "All ages" : "全部年龄"}
         options={[
-          { v: "all", l: lang === "en" ? "All ages" : "全部年龄" },
-          { v: "0-2", l: lang === "en" ? "0–2" : "0-2 岁" },
-          { v: "3-5", l: lang === "en" ? "3–5" : "3-5 岁" },
-          { v: "6+", l: lang === "en" ? "6+" : "6 岁以上" },
+          { v: "0-2" as AgeRange, l: lang === "en" ? "0–2" : "0-2 岁" },
+          { v: "3-5" as AgeRange, l: lang === "en" ? "3–5" : "3-5 岁" },
+          { v: "6+" as AgeRange, l: lang === "en" ? "6+" : "6 岁以上" },
         ]}
-        onChange={(v) => setAge(v as AgeRange | "all")}
+        onToggle={(v) =>
+          setAges((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]))
+        }
+        onClearAll={() => setAges([])}
       />
       <MultiFilterGroup
         label={lang === "en" ? "Book Status" : "图书状态"}
