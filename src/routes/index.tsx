@@ -50,7 +50,7 @@ function Index() {
   const [q, setQ] = useState("");
   const [script, setScript] = useState<ScriptType | "all">("all");
   const [age, setAge] = useState<AgeRange | "all">("all");
-  const [status, setStatus] = useState<BookStatus | "all">("all");
+  const [statuses, setStatuses] = useState<BookStatus[]>([]);
   const [selected, setSelected] = useState<Book | null>(null);
 
   const filtered = useMemo(
@@ -59,7 +59,7 @@ function Index() {
         if (b.status === "private") return false;
         if (script !== "all" && b.script_type !== script) return false;
         if (age !== "all" && !parseAgeRanges(b.age_range).includes(age)) return false;
-        if (status !== "all" && b.status !== status) return false;
+        if (statuses.length > 0 && !statuses.includes(b.status)) return false;
         if (q.trim()) {
           const t = q.toLowerCase();
           const matches =
@@ -72,7 +72,7 @@ function Index() {
         }
         return true;
       }),
-    [books, q, script, age, status],
+    [books, q, script, age, statuses],
   );
 
   const filters = (
@@ -99,15 +99,19 @@ function Index() {
         ]}
         onChange={(v) => setAge(v as AgeRange | "all")}
       />
-      <FilterGroup
+      <MultiFilterGroup
         label={lang === "en" ? "Book Status" : "图书状态"}
-        value={status}
+        values={statuses}
+        allLabel={lang === "en" ? "All" : "全部"}
         options={[
-          { v: "all", l: lang === "en" ? "All" : "全部" },
           { v: "available", l: t("status_available") },
           { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
+          { v: "donation", l: lang === "en" ? "Donated" : "爱心捐赠" },
         ]}
-        onChange={(v) => setStatus(v as BookStatus | "all")}
+        onToggle={(v) =>
+          setStatuses((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]))
+        }
+        onClearAll={() => setStatuses([])}
       />
     </div>
   );
