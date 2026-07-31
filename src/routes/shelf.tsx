@@ -404,7 +404,7 @@ function BatchEditBar({
 
       <BatchRow label={t("batch_set_status")}>
         {([
-          ["available", lang === "en" ? "Available" : "可借阅"],
+          ["available", t("status_available")],
           ["for_sale", lang === "en" ? "For Sale" : "可出售"],
           ["donation", lang === "en" ? "Donated" : "爱心捐赠"],
           ["private", lang === "en" ? "Private" : "私密收藏"],
