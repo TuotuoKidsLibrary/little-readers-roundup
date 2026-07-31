@@ -104,7 +104,7 @@ function Index() {
         value={status}
         options={[
           { v: "all", l: lang === "en" ? "All" : "全部" },
-          { v: "available", l: lang === "en" ? "Available" : "可借阅" },
+          { v: "available", l: t("status_available") },
           { v: "for_sale", l: lang === "en" ? "For Sale" : "可出售" },
         ]}
         onChange={(v) => setStatus(v as BookStatus | "all")}

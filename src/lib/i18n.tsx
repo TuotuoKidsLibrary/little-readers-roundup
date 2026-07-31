@@ -236,7 +236,7 @@ const dict = {
   filters_all: { en: "All", zh: "全部" },
   filters_all_ages: { en: "All ages", zh: "全部年龄" },
   book_status: { en: "Book Status", zh: "图书状态" },
-  status_available: { en: "Available", zh: "可借阅" },
+  status_available: { en: "Available to Borrow", zh: "可借阅" },
   no_books_match: { en: "No books match these filters.", zh: "暂无符合筛选条件的绘本。" },
   batch_edit: { en: "Batch Edit", zh: "批量编辑" },
   batch_done: { en: "Done", zh: "完成" },

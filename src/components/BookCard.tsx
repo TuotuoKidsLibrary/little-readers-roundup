@@ -53,7 +53,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
     
     return (
       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[11px] font-normal px-2 py-0">
-        {lang === "en" ? "Available" : "可借阅"}
+        {t("status_available")}
       </Badge>
     );
   };
