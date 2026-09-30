@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "./AuthDialog";
 import { LockedActionDialog } from "./LockedActionDialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useI18n } from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -101,6 +101,7 @@ export function AppShell() {
                       className="rounded-full ring-1 ring-border hover:ring-primary/40 transition-shadow"
                     >
                       <Avatar className="size-9">
+                        {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
                         <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold text-sm">
                           {initials || "U"}
                         </AvatarFallback>
