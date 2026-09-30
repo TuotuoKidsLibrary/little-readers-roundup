@@ -3,38 +3,51 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Wallet, Settings, Sparkles, MapPin, Heart, Check, X } from "lucide-react";
+import { Wallet, Settings, Sparkles, MapPin, Heart, Check, X, Camera, LoaderCircle } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { AuthDialog } from "@/components/AuthDialog";
 import { useI18n } from "@/lib/i18n";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
       { title: "Account & Membership — 账号和会员信息" },
       { name: "description", content: "Manage your profile, membership, and wallet." },
+      { property: "og:title", content: "Account & Membership — Tuotuo Kids Library" },
+      { property: "og:description", content: "Manage your Tuotuo Kids Library member profile and membership." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AccountPage,
 });
 
 function AccountPage() {
-  const { user, updateProfile, isAuthenticated } = useStore();
+  const { user, updateProfile, uploadProfilePhoto, isAuthenticated } = useStore();
   const { t } = useI18n();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
   const [zip, setZip] = useState(user.zip_code);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url);
+  const [tagline, setTagline] = useState(user.tagline);
+  const [intro, setIntro] = useState(user.intro);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setAvatarUrl(user.avatar_url);
+    setTagline(user.tagline);
+    setIntro(user.intro);
   }, [user]);
 
   const handleSave = async () => {
@@ -42,15 +55,36 @@ function AccountPage() {
       name: name,
       neighborhood_location: neighborhood,
       zip_code: zip,
+      avatar_url: avatarUrl,
+      tagline: tagline.trim(),
+      intro: intro.trim(),
     });
     setIsEditing(false);
+    toast.success(t("profile_saved"));
   };
 
   const handleCancel = () => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setAvatarUrl(user.avatar_url);
+    setTagline(user.tagline);
+    setIntro(user.intro);
     setIsEditing(false);
+  };
+
+  const handlePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    const result = await uploadProfilePhoto(file);
+    setIsUploading(false);
+    event.target.value = "";
+    if (result.error || !result.url) {
+      toast.error(t("profile_photo_error"), { description: result.error ?? undefined });
+      return;
+    }
+    setAvatarUrl(result.url);
   };
 
   return (
@@ -58,12 +92,27 @@ function AccountPage() {
       <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap">{t("account_title")}</h1>
 
       <Card className="p-5 bg-card space-y-5">
-        <div className="flex items-center gap-4">
-          <Avatar className="size-14">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <div className="flex shrink-0 items-center gap-3 sm:block">
+          <Avatar className="size-20 ring-2 ring-border">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={name} className="object-cover" />}
             <AvatarFallback className="bg-primary text-primary-foreground font-serif font-bold">
               {isAuthenticated ? name.split(" ").map((w) => w[0]).join("") : "GV"}
             </AvatarFallback>
           </Avatar>
+          {isEditing && (
+            <div className="sm:mt-2 sm:text-center">
+              <Button variant="outline" size="sm" asChild className="gap-1.5">
+                <label htmlFor="profile-photo" className="cursor-pointer">
+                  {isUploading ? <LoaderCircle className="size-4 animate-spin" /> : <Camera className="size-4" />}
+                  {isUploading ? t("photo_uploading") : avatarUrl ? t("change_profile_photo") : t("upload_profile_photo")}
+                </label>
+              </Button>
+              <input id="profile-photo" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={handlePhoto} disabled={isUploading} />
+              <p className="mt-1 text-[10px] text-muted-foreground">{t("photo_upload_hint")}</p>
+            </div>
+          )}
+          </div>
           <div className="flex-1 space-y-1">
             {isEditing ? (
               <div className="grid gap-1.5 max-w-xs">
@@ -83,18 +132,21 @@ function AccountPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {isAuthenticated ? t("account_member_since") : t("account_guest_subtitle")}
                 </p>
+                {isAuthenticated && user.tagline && (
+                  <p className="pt-2 text-sm font-medium text-foreground/80">{user.tagline}</p>
+                )}
               </>
             )}
           </div>
           {isAuthenticated && (
-            <div className="flex gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               {isEditing ? (
                 <>
                   <Button variant="ghost" size="sm" onClick={handleCancel} className="gap-1 text-muted-foreground">
-                    <X className="size-4" /> Cancel
+                    <X className="size-4" /> {t("cancel_editing")}
                   </Button>
                   <Button size="sm" onClick={handleSave} className="gap-1">
-                    <Check className="size-4" /> Save
+                    <Check className="size-4" /> {t("save_profile")}
                   </Button>
                 </>
               ) : (
@@ -126,6 +178,35 @@ function AccountPage() {
         )}
 
         <Separator />
+
+        {isAuthenticated && (
+          <div className="grid gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="tagline">{t("tagline_label")}</Label>
+              {isEditing ? (
+                <>
+                  <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value.slice(0, 80))} placeholder={t("tagline_placeholder")} maxLength={80} />
+                  <p className="text-right text-[11px] text-muted-foreground">{tagline.length}/80</p>
+                </>
+              ) : (
+                <p className="min-h-6 text-sm text-foreground/80">{user.tagline || "—"}</p>
+              )}
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="intro">{t("intro_label")}</Label>
+              {isEditing ? (
+                <>
+                  <Textarea id="intro" value={intro} onChange={(e) => setIntro(e.target.value.slice(0, 500))} placeholder={t("intro_placeholder")} maxLength={500} className="min-h-28 resize-y" />
+                  <p className="text-right text-[11px] text-muted-foreground">{intro.length}/500</p>
+                </>
+              ) : (
+                <p className="min-h-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">{user.intro || "—"}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isAuthenticated && <Separator />}
 
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="grid gap-1.5">

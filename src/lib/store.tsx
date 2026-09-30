@@ -27,6 +27,9 @@ function loadGuestSavedBooks(): string[] {
 const guestUser: UserProfile = {
   id: "guest",
   name: "Guest Visitor",
+  avatar_url: "",
+  tagline: "",
+  intro: "",
   membership_status: "Free Tier",
   deposit_balance: 0,
   wallet_balance: 0,
@@ -61,6 +64,7 @@ interface StoreCtx {
   fetchMessagesForThread: (requestId: string) => Promise<Message[]>;
   updateRequestStatus: (requestId: string, status: BookRequest["status"]) => Promise<{ error: string | null }>;
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
+  uploadProfilePhoto: (file: File) => Promise<{ url: string | null; error: string | null }>;
   toggleSaveBook: (id: string) => void;
   fetchBookMetadata: (isbn: string) => Promise<{ title: string; author: string } | null>;
   uploadBookCover: (file: File) => Promise<{ url: string | null; error: string | null }>;
@@ -182,7 +186,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session && session.user) {
         setIsAuthenticated(true);
-        fetchAndSetProfile(session.user.id, session.user.email || "");
+        fetchAndSetProfile(session.user.id, session.user.email || "", session.user.user_metadata);
         fetchRequestsAndMessages(session.user.id);
         await migrateGuestFavorites(session.user.id);
         setSavedBookIds(await fetchSavedBookIds(session.user.id));
@@ -197,7 +201,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isAuthenticated, user.id]);
 
-  async function fetchAndSetProfile(userId: string, email: string) {
+  async function fetchAndSetProfile(
+    userId: string,
+    email: string,
+    metadata: Record<string, unknown> = {},
+  ) {
     const { data } = await supabase
       .from("profiles")
       .select("*")
@@ -207,6 +215,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser({
       id: userId,
       name: data?.name || email.split("@")[0],
+      avatar_url: typeof metadata.avatar_url === "string" ? metadata.avatar_url : "",
+      tagline: typeof metadata.tagline === "string" ? metadata.tagline : "",
+      intro: typeof metadata.intro === "string" ? metadata.intro : "",
       membership_status: "Verified Library Member",
       deposit_balance: 0,
       wallet_balance: 0,
@@ -239,7 +250,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     if (data.user) {
       setIsAuthenticated(true);
-      await fetchAndSetProfile(data.user.id, email);
+      await fetchAndSetProfile(data.user.id, email, data.user.user_metadata);
       await fetchRequestsAndMessages(data.user.id);
       await migrateGuestFavorites(data.user.id);
       setSavedBookIds(await fetchSavedBookIds(data.user.id));
@@ -267,6 +278,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setUser({
         id: data.user.id,
         name: name,
+        avatar_url: "",
+        tagline: "",
+        intro: "",
         membership_status: "Verified Library Member",
         deposit_balance: 0,
         wallet_balance: 0,
@@ -376,11 +390,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
       .eq("id", user.id);
 
-    if (!error) {
+    const profileMetadata = {
+      avatar_url: patch.avatar_url ?? user.avatar_url,
+      tagline: patch.tagline ?? user.tagline,
+      intro: patch.intro ?? user.intro,
+    };
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: profileMetadata,
+    });
+
+    if (!error && !metadataError) {
       setUser((prev) => ({ ...prev, ...patch }));
     } else {
-      console.error("Error updating database profile info:", error);
+      console.error("Error updating profile info:", error ?? metadataError);
     }
+  };
+
+  const uploadProfilePhoto: StoreCtx["uploadProfilePhoto"] = async (file) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { url: null, error: "Please log in to upload a profile photo." };
+
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (!file.type.startsWith("image/")) {
+      return { url: null, error: "Please choose an image file." };
+    }
+    if (file.size > MAX_BYTES) {
+      return { url: null, error: "Image is too large — please choose one under 5MB." };
+    }
+
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${session.user.id}/profiles/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from(COVER_BUCKET)
+      .upload(path, file, { upsert: false, contentType: file.type });
+
+    if (error) return { url: null, error: error.message };
+    const { data } = supabase.storage.from(COVER_BUCKET).getPublicUrl(path);
+    return { url: data.publicUrl, error: null };
   };
 
   const fetchBookMetadata = async (isbn: string): Promise<{ title: string; author: string } | null> => {
@@ -565,6 +611,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         fetchMessagesForThread,
         updateRequestStatus,
         updateProfile,
+        uploadProfilePhoto,
         toggleSaveBook,
         fetchBookMetadata,
         uploadBookCover,

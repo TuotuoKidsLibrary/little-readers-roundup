@@ -64,6 +64,9 @@ export interface ActivityRecord {
 export interface UserProfile {
   id: string;
   name: string;
+  avatar_url: string;
+  tagline: string;
+  intro: string;
   membership_status: string;
   deposit_balance: number;
   wallet_balance: number;
