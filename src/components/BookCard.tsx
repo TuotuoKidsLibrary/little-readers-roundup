@@ -37,9 +37,14 @@ export function BookCard({ book, onClick }: BookCardProps) {
     
     if (book.status === "donation") {
       return (
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 text-[11px] font-normal px-2 py-0">
-          {lang === "en" ? "Donated" : "爱心捐赠"}
-        </Badge>
+        <>
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 text-[11px] font-normal px-2 py-0">
+            {lang === "en" ? "Donated" : "爱心捐赠"}
+          </Badge>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[11px] font-normal px-2 py-0">
+            {t("status_available")}
+          </Badge>
+        </>
       );
     }
 
