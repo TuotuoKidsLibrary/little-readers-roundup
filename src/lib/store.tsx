@@ -412,8 +412,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { url: null, error: uploadError.message };
     }
 
-    const { data } = supabase.storage.from(COVER_BUCKET).getPublicUrl(path);
-    return { url: data.publicUrl, error: null };
+    const { data, error: signError } = await supabase.storage
+      .from(COVER_BUCKET)
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (signError || !data) return { url: null, error: signError?.message ?? "Upload failed" };
+    return { url: data.signedUrl, error: null };
   };
 
   const toggleSaveBook = (id: string) => {
