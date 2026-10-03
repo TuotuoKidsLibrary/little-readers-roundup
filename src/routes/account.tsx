@@ -89,6 +89,9 @@ function AccountPage() {
                 <p className="font-serif font-bold text-xl leading-none">
                   {isAuthenticated ? user.name : t("account_guest_name")}
                 </p>
+                {isAuthenticated && user.tagline && (
+                  <p className="text-sm text-primary font-medium mt-0.5">{user.tagline}</p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {isAuthenticated ? t("account_member_since") : t("account_guest_subtitle")}
                 </p>
@@ -163,6 +166,34 @@ function AccountPage() {
             <MapPin className="size-3.5 text-primary" />
             {t("neighborhood_hint")}
           </p>
+          {isAuthenticated && (
+            <>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="tagline">{t("tagline_label")}</Label>
+                <Input
+                  id="tagline"
+                  value={tagline}
+                  disabled={!isEditing}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder={t("tagline_placeholder")}
+                  maxLength={80}
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="intro">{t("intro_label")}</Label>
+                <Textarea
+                  id="intro"
+                  value={intro}
+                  disabled={!isEditing}
+                  onChange={(e) => setIntro(e.target.value)}
+                  placeholder={t("intro_placeholder")}
+                  rows={4}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
+            </>
+          )}
         </div>
       </Card>
 
