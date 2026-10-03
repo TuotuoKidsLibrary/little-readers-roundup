@@ -136,6 +136,14 @@ export function AppShell() {
         <Outlet />
       </main>
 
+      <footer className="border-t border-border/60 pb-24 md:pb-6 pt-6">
+        <div className="mx-auto max-w-6xl px-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Link to="/contact" className="hover:text-foreground transition-colors">
+            {t("nav_contact")}
+          </Link>
+        </div>
+      </footer>
+
       {/* Bottom dock — mobile */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur">
         <div className="grid grid-cols-3 px-2 py-2 gap-1 safe-area">
