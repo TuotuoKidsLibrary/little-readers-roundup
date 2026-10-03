@@ -13,7 +13,7 @@ const dict = {
   nav_contact: { en: "Contact Us", zh: "联系我们" },
   contact_title: { en: "Contact Us", zh: "联系我们" },
   contact_subtitle: {
-    en: "Questions, feedback, or ideas for our bilingual book community? We'd love to hear from you.",
+    en: "Questions, feedback, or ideas for our Chinese community library? We'd love to hear from you.",
     zh: "对我们的中文绘本社群有问题、建议或想法？我们很期待听到您的声音。",
   },
   contact_name: { en: "Name", zh: "姓名" },
