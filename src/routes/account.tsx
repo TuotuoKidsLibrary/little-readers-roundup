@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -30,11 +31,15 @@ function AccountPage() {
   const [name, setName] = useState(user.name);
   const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
   const [zip, setZip] = useState(user.zip_code);
+  const [tagline, setTagline] = useState(user.tagline);
+  const [intro, setIntro] = useState(user.intro);
 
   useEffect(() => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setTagline(user.tagline);
+    setIntro(user.intro);
   }, [user]);
 
   const handleSave = async () => {
@@ -42,6 +47,8 @@ function AccountPage() {
       name: name,
       neighborhood_location: neighborhood,
       zip_code: zip,
+      tagline: tagline,
+      intro: intro,
     });
     setIsEditing(false);
   };
@@ -50,6 +57,8 @@ function AccountPage() {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setTagline(user.tagline);
+    setIntro(user.intro);
     setIsEditing(false);
   };
 
