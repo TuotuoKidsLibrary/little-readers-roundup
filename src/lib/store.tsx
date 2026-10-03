@@ -32,6 +32,8 @@ const guestUser: UserProfile = {
   wallet_balance: 0,
   neighborhood_location: "",
   zip_code: "",
+  tagline: "",
+  intro: "",
 };
 
 export interface SignupInput {
@@ -212,6 +214,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wallet_balance: 0,
       neighborhood_location: data?.neighborhood_location || "",
       zip_code: data?.zip_code || "",
+      tagline: data?.tagline || "",
+      intro: data?.intro || "",
     });
   }
 
@@ -272,6 +276,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         wallet_balance: 0,
         neighborhood_location: neighborhood,
         zip_code: zip,
+        tagline: "",
+        intro: "",
       });
 
       await migrateGuestFavorites(data.user.id);
@@ -373,6 +379,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         name: patch.name,
         neighborhood_location: patch.neighborhood_location,
         zip_code: patch.zip_code,
+        tagline: patch.tagline,
+        intro: patch.intro,
       })
       .eq("id", user.id);
 
