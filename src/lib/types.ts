@@ -69,4 +69,6 @@ export interface UserProfile {
   wallet_balance: number;
   neighborhood_location: string;
   zip_code: string;
+  tagline: string;
+  intro: string;
 }

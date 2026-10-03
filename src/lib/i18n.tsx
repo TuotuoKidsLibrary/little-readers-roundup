@@ -70,6 +70,10 @@ const dict = {
   edit: { en: "Edit", zh: "编辑" },
   neighborhood_label: { en: "Neighborhood / Community Name", zh: "所在社区" },
   zip_label: { en: "Zip Code", zh: "邮编" },
+  tagline_label: { en: "Tagline", zh: "一句话介绍" },
+  tagline_placeholder: { en: "e.g., Mom of two bilingual readers", zh: "例如：两个双语宝宝的妈妈" },
+  intro_label: { en: "About Me", zh: "自我介绍" },
+  intro_placeholder: { en: "Tell other families a little about yourself and the books you love…", zh: "和其他家庭介绍一下你自己和你喜欢的绘本…" },
   neighborhood_hint: {
     en: "Used to help local parents calculate meetup distances for exchanges.",
     zh: "用于帮助附近家长计算面交距离。",

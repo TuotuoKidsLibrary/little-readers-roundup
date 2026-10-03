@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -30,11 +31,15 @@ function AccountPage() {
   const [name, setName] = useState(user.name);
   const [neighborhood, setNeighborhood] = useState(user.neighborhood_location);
   const [zip, setZip] = useState(user.zip_code);
+  const [tagline, setTagline] = useState(user.tagline);
+  const [intro, setIntro] = useState(user.intro);
 
   useEffect(() => {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setTagline(user.tagline);
+    setIntro(user.intro);
   }, [user]);
 
   const handleSave = async () => {
@@ -42,6 +47,8 @@ function AccountPage() {
       name: name,
       neighborhood_location: neighborhood,
       zip_code: zip,
+      tagline: tagline,
+      intro: intro,
     });
     setIsEditing(false);
   };
@@ -50,6 +57,8 @@ function AccountPage() {
     setName(user.name);
     setNeighborhood(user.neighborhood_location);
     setZip(user.zip_code);
+    setTagline(user.tagline);
+    setIntro(user.intro);
     setIsEditing(false);
   };
 
@@ -80,6 +89,9 @@ function AccountPage() {
                 <p className="font-serif font-bold text-xl leading-none">
                   {isAuthenticated ? user.name : t("account_guest_name")}
                 </p>
+                {isAuthenticated && user.tagline && (
+                  <p className="text-sm text-primary font-medium mt-0.5">{user.tagline}</p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {isAuthenticated ? t("account_member_since") : t("account_guest_subtitle")}
                 </p>
@@ -154,6 +166,34 @@ function AccountPage() {
             <MapPin className="size-3.5 text-primary" />
             {t("neighborhood_hint")}
           </p>
+          {isAuthenticated && (
+            <>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="tagline">{t("tagline_label")}</Label>
+                <Input
+                  id="tagline"
+                  value={tagline}
+                  disabled={!isEditing}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder={t("tagline_placeholder")}
+                  maxLength={80}
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="intro">{t("intro_label")}</Label>
+                <Textarea
+                  id="intro"
+                  value={intro}
+                  disabled={!isEditing}
+                  onChange={(e) => setIntro(e.target.value)}
+                  placeholder={t("intro_placeholder")}
+                  rows={4}
+                  maxLength={500}
+                  className="resize-none"
+                />
+              </div>
+            </>
+          )}
         </div>
       </Card>
 
